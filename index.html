@@ -1,0 +1,2853 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magnolia – Bestillingssystem</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#F7F5F0;
+  --surface:#FFFFFF;
+  --border:#E5E0D8;
+  --border-strong:#C8C0B4;
+  --text:#1A1714;
+  --text-muted:#7A7268;
+  --text-hint:#B0A898;
+  --accent:#2C4A3E;
+  --accent-light:#EAF0ED;
+  --accent-hover:#1e3329;
+  --danger:#C0392B;
+  --danger-light:#FDECEA;
+  --warning-light:#FEF9EC;
+  --warning:#B7860B;
+  --radius:8px;
+  --radius-lg:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+h1,h2,h3{font-family:'DM Serif Display',serif;font-weight:400}
+
+/* Layout */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:50}
+.header-logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);letter-spacing:0.02em}
+.header-logo span{color:var(--accent)}
+.top-nav{display:flex;gap:4px}
+.nav-btn{padding:7px 18px;border:1px solid transparent;border-radius:var(--radius);background:transparent;color:var(--text-muted);cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:all 0.15s}
+.nav-btn:hover{color:var(--text);background:var(--bg)}
+.nav-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.main{max-width:920px;margin:0 auto;padding:2rem 1.5rem}
+.sub-nav{display:flex;gap:6px;margin-bottom:1.5rem}
+.sub-btn{padding:6px 16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text-muted);cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.sub-btn:hover{border-color:var(--border-strong);color:var(--text)}
+.sub-btn.active{background:var(--accent-light);color:var(--accent);border-color:var(--accent)}
+
+.section{display:none}.section.active{display:block}
+.panel{display:none}.panel.active{display:block}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1rem}
+.card-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--text-muted);margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border)}
+
+/* Forms */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+label{font-size:12px;color:var(--text-muted);font-weight:500;letter-spacing:0.03em;text-transform:uppercase}
+input,select,textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;transition:border-color 0.15s;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{resize:vertical;min-height:72px;line-height:1.5}
+.checkbox-row{display:flex;align-items:center;gap:9px;padding:4px 0}
+.checkbox-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.checkbox-row label{font-size:13px;color:var(--text);font-weight:400;text-transform:none;letter-spacing:0;cursor:pointer}
+
+/* Packages */
+.pkg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pkg-card{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:all 0.15s;background:var(--surface);text-align:left;width:100%;font-family:'DM Sans',sans-serif;-webkit-appearance:none;appearance:none}
+.pkg-card:hover{border-color:var(--border-strong);background:var(--bg)}
+.pkg-card.selected{border-color:var(--accent);background:var(--accent-light);outline:none}
+.pkg-name{font-size:13px;font-weight:500;color:var(--text)}
+.pkg-price{font-size:12px;color:var(--text-muted);margin-top:3px}
+.pkg-desc{font-size:11px;color:var(--text-hint);margin-top:5px;line-height:1.5}
+
+/* Conditional */
+.diff-arrival{margin-top:10px;padding:14px;background:var(--bg);border-radius:var(--radius);display:none}
+.diff-arrival.show{display:block}
+.conditional-lunch{display:none;margin-top:14px}.conditional-lunch.show{display:block}
+
+/* Responsibility */
+.resp-row{display:grid;grid-template-columns:1fr 180px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.resp-row:last-child{border-bottom:none}
+.resp-label{font-size:13px;color:var(--text)}
+
+/* Buttons */
+.action-row{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem}
+.btn-primary{padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background 0.15s}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-secondary{padding:10px 22px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s}
+.btn-secondary:hover{border-color:var(--border-strong)}
+
+/* Calendar */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.cal-nav-btn{padding:6px 14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);cursor:pointer;font-size:18px;line-height:1;transition:all 0.15s}
+.cal-nav-btn:hover{border-color:var(--border-strong)}
+.cal-month-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)}
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}
+.cal-day-name{text-align:center;font-size:11px;color:var(--text-hint);font-weight:500;padding:4px 0;text-transform:uppercase;letter-spacing:0.05em}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-day{border:1px solid var(--border);border-radius:var(--radius);padding:7px 6px;min-height:58px;cursor:pointer;transition:all 0.15s;background:var(--surface)}
+.cal-day:hover{border-color:var(--border-strong);background:var(--bg)}
+.cal-day.other-month{opacity:0.3;cursor:default}
+.cal-day.other-month:hover{border-color:var(--border);background:var(--surface)}
+.cal-day.today{border-color:var(--accent)}
+.cal-day.has-booking{background:var(--accent-light)}
+.cal-day-num{font-size:12px;color:var(--text-muted);margin-bottom:4px}
+.cal-day.today .cal-day-num{color:var(--accent);font-weight:500}
+.cal-pip{width:6px;height:6px;border-radius:50%;background:var(--danger);margin:2px auto 1px}
+.cal-count{font-size:10px;color:var(--accent);text-align:center;font-weight:500}
+
+/* Booking list */
+.booking-list{display:flex;flex-direction:column;gap:8px}
+.booking-item{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;background:var(--surface);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.booking-item-main{flex:1;min-width:0}
+.booking-title{font-size:14px;font-weight:500;color:var(--text)}
+.booking-sub{font-size:12px;color:var(--text-muted);margin-top:3px;line-height:1.5}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;margin-left:6px}
+.badge-vip{background:var(--warning-light);color:var(--warning)}
+.badge-pkg{background:var(--accent-light);color:var(--accent)}
+.booking-actions{display:flex;gap:6px;flex-shrink:0}
+.btn-detail{padding:5px 12px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;color:var(--text-muted);cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;transition:all 0.15s;white-space:nowrap}
+.btn-detail:hover{border-color:var(--border-strong);color:var(--text)}
+.btn-del{padding:5px 12px;border:1px solid transparent;border-radius:var(--radius);background:transparent;color:var(--danger);cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;transition:all 0.15s;white-space:nowrap}
+.btn-del:hover{background:var(--danger-light);border-color:var(--danger)}
+.empty-state{text-align:center;padding:2.5rem;color:var(--text-hint);font-size:13px}
+.day-detail-header{display:flex;align-items:baseline;gap:12px;margin-bottom:1rem}
+.day-detail-title{font-family:'DM Serif Display',serif;font-size:18px}
+.day-detail-sub{font-size:13px;color:var(--text-muted)}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:1.75rem;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;border:1px solid var(--border)}
+.modal-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;gap:1rem}
+.modal-title{font-family:'DM Serif Display',serif;font-size:20px}
+.modal-close{background:none;border:none;font-size:22px;color:var(--text-hint);cursor:pointer;line-height:1;padding:0;flex-shrink:0}
+.modal-close:hover{color:var(--text)}
+.detail-section{margin-bottom:1.25rem}
+.detail-section-title{font-size:11px;font-weight:500;color:var(--text-hint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px}
+.detail-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 20px}
+.detail-label{font-size:13px;color:var(--text-muted);white-space:nowrap}
+.detail-val{font-size:13px;color:var(--text)}
+.divider{border:none;border-top:1px solid var(--border);margin:1rem 0}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--accent);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:14px;z-index:300;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{background:var(--danger)}
+
+/* Loading */
+.loading{text-align:center;padding:2rem;color:var(--text-hint);font-size:13px}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo" onclick="handleLogoClick()" style="cursor:default;user-select:none">Magnolia<span>.</span></div>
+  <div class="top-nav">
+    <button class="nav-btn active" onclick="switchMain('today',this)">Dashboard</button>
+    <button class="nav-btn" onclick="switchMain('meeting',this)">Møterom</button>
+    <button class="nav-btn" onclick="switchMain('restaurant',this)">Restaurant</button>
+    <button class="nav-btn" onclick="switchMain('events',this)">Andre eventer</button>
+    <button class="nav-btn" onclick="switchMain('oppslagstavle',this)">Oppslagstavle</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- TODAY OVERVIEW -->
+  <div id="today-section" class="section active">
+    <input type="date" id="overview-date" style="display:none" onchange="setOverviewDate('custom')">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px">
+        <h2 style="font-size:26px;margin-bottom:4px" id="today-greeting">Hei, dette skjer i dag!</h2>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:1rem" id="today-date-label"></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn-secondary" style="font-size:13px;padding:7px 14px" onclick="setOverviewDate('today')">I dag</button>
+          <button class="btn-secondary" style="font-size:13px;padding:7px 14px" onclick="setOverviewDate('tomorrow')">I morgen</button>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0.875rem;min-width:260px;max-width:300px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <button class="btn-secondary" style="padding:2px 8px;font-size:14px;line-height:1" onclick="miniCalChangeMonth(-1)">&#8592;</button>
+          <span style="font-size:12px;font-weight:500;color:var(--text)" id="mini-cal-title"></span>
+          <button class="btn-secondary" style="padding:2px 8px;font-size:14px;line-height:1" onclick="miniCalChangeMonth(1)">&#8594;</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:3px">
+          <div style="text-align:center;font-size:9px;color:var(--text-hint);font-weight:500;text-transform:uppercase">ma</div>
+          <div style="text-align:center;font-size:9px;color:var(--text-hint);font-weight:500;text-transform:uppercase">ti</div>
+          <div style="text-align:center;font-size:9px;color:var(--text-hint);font-weight:500;text-transform:uppercase">on</div>
+          <div style="text-align:center;font-size:9px;color:var(--text-hint);font-weight:500;text-transform:uppercase">to</div>
+          <div style="text-align:center;font-size:9px;color:var(--text-hint);font-weight:500;text-transform:uppercase">fr</div>
+          <div style="text-align:center;font-size:9px;color:var(--text-hint);font-weight:500;text-transform:uppercase">lø</div>
+          <div style="text-align:center;font-size:9px;color:var(--text-hint);font-weight:500;text-transform:uppercase">sø</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px" id="mini-cal-grid"></div>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem;position:relative">
+      <button class="btn-primary" onclick="toggleNewBookingMenu(event)" style="width:100%">+ Ny bestilling</button>
+      <div id="new-booking-menu" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);z-index:50;margin-top:4px;overflow:hidden">
+        <button onclick="openNewBooking('meeting')" style="width:100%;padding:12px 16px;text-align:left;background:none;border:none;border-bottom:1px solid var(--border);font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);cursor:pointer" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">Møterom</button>
+        <button onclick="openNewBooking('restaurant')" style="width:100%;padding:12px 16px;text-align:left;background:none;border:none;border-bottom:1px solid var(--border);font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);cursor:pointer" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">Restaurant</button>
+        <button onclick="openNewBooking('events')" style="width:100%;padding:12px 16px;text-align:left;background:none;border:none;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);cursor:pointer" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">Andre eventer</button>
+      </div>
+    </div>
+    <div class="card">
+      <div id="today-meeting-list"><div class="loading"><span class="spinner"></span>Laster...</div></div>
+    </div>
+    <div class="card">
+      <div id="today-restaurant-summary" style="font-size:13px;color:var(--text-muted);margin-bottom:1rem"></div>
+      <div id="today-restaurant-list"></div>
+    </div>
+    <div class="card">
+      <div id="today-events-list"></div>
+    </div>
+  </div>
+
+  <!-- OPPSLAGSTAVLE SECTION -->
+  <div id="oppslagstavle" class="section">
+    <div class="sub-nav">
+      <button class="sub-btn active" onclick="switchSub('oppslagstavle','o-form',this)">Skriv inn</button>
+      <button class="sub-btn" onclick="switchSub('oppslagstavle','o-checkout',this)">Møterom checkout</button>
+      <button class="sub-btn" onclick="switchSub('oppslagstavle','o-info',this)">Informasjon</button>
+    </div>
+
+    <!-- SKRIV INN -->
+    <div id="o-form" class="panel active">
+      <div class="card">
+        <div class="card-title">Dato</div>
+        <div class="form-group" style="max-width:200px">
+          <label>Dato</label>
+          <input type="date" id="o-date">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Mangler & bestillinger</div>
+        <div class="form-group">
+          <label>Hva mangler / hva må bestilles?</label>
+          <textarea id="o-mangler" placeholder="F.eks. Vi har kun 1 kg kaffe igjen, trenger å bestille chablis til helgen..." style="min-height:100px"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Generell logg</div>
+        <div class="form-group">
+          <label>Notater, beskjeder, hendelser</label>
+          <textarea id="o-logg" placeholder="F.eks. Kompfyren lagde lyd i dag, gjest klaget på ventetid..." style="min-height:100px"></textarea>
+        </div>
+        <div class="form-group" style="margin-top:12px;max-width:200px">
+          <label>Skrevet av</label>
+          <input type="text" id="o-author" placeholder="Navn">
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn-primary" onclick="saveOppslagstavle()">Lagre og legg inn ny</button>
+      </div>
+      <div id="o-history" style="margin-top:1.5rem"></div>
+    </div>
+
+    <!-- CHECKOUT -->
+    <div id="o-checkout" class="panel">
+      <div class="card">
+        <div class="card-title">Møterom checkout</div>
+        <div class="form-group" style="max-width:200px;margin-bottom:1rem">
+          <label>Dato</label>
+          <input type="date" id="co-date" onchange="renderCheckout()">
+        </div>
+        <div id="checkout-rooms"></div>
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)">
+          <div class="card-title">Kjøkkenskapet — minimumssjekk</div>
+          <div id="checkout-kitchen" style="margin-top:0.75rem">
+            <label class="checkbox-row"><input type="checkbox" class="co-check"> <span>Min. 30 kaffekopper + skåler</span></label><br>
+            <label class="checkbox-row" style="margin-top:6px"><input type="checkbox" class="co-check"> <span>Min. 30 vannglass</span></label><br>
+            <label class="checkbox-row" style="margin-top:6px"><input type="checkbox" class="co-check"> <span>Min. 30 små tallerkner</span></label><br>
+            <label class="checkbox-row" style="margin-top:6px"><input type="checkbox" class="co-check"> <span>Min. 30 servietter</span></label><br>
+            <div class="form-group" style="margin-top:10px">
+              <label>Avvik / kommentar kjøkken</label>
+              <textarea id="co-kitchen-avvik" placeholder="F.eks. mangler 4 kaffekopper..." style="min-height:60px"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:1rem;max-width:200px">
+          <label>Signert av</label>
+          <input type="text" id="co-signed" placeholder="Navn">
+        </div>
+        <div class="action-row">
+          <button class="btn-primary" onclick="saveCheckout()">Lagre checkout</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFORMASJON -->
+    <div id="o-info" class="panel">
+      <div class="card">
+        <div class="card-title">Møtepakker</div>
+        <div style="font-size:13px;line-height:1.8;color:var(--text)">
+          <div style="margin-bottom:12px"><strong>Pakke 1 – Kaffe</strong> &nbsp;·&nbsp; 115,- eks. mva/pers<br>Kaffe, te og vann med påfyll gjennom dagen</div>
+          <div style="margin-bottom:12px"><strong>Pakke 2 – Kaffe og enkel servering</strong> &nbsp;·&nbsp; 195,- eks. mva/pers<br>Kaffe/te/vann + fruktfat og søtt bakverk fra møtestart</div>
+          <div style="margin-bottom:12px"><strong>Pakke 3 – Brødmat</strong> &nbsp;·&nbsp; 390,- eks. mva/pers<br>Kaffe/te/vann + frukt/bakverk + brødlunsj + søtt etter lunsj</div>
+          <div><strong>Pakke 4 – Lunsj fra Magnolia</strong> &nbsp;·&nbsp; 510,- eks. mva/pers<br>Kaffe/te/vann + frukt/bakverk + Magnolia-lunsj + søtt etter lunsj</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Møterom</div>
+        <div style="font-size:13px;line-height:1.8;color:var(--text)">
+          <div style="margin-bottom:8px"><strong>Wenche Selmer</strong> &nbsp;·&nbsp; maks 13 pers</div>
+          <div style="margin-bottom:8px"><strong>Lilla Hansen</strong> &nbsp;·&nbsp; maks 8 pers</div>
+          <div><strong>Christian Norberg-Schulz</strong> &nbsp;·&nbsp; maks 70 pers</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Restaurantbord</div>
+        <div style="font-size:13px;line-height:1.8;color:var(--text)">
+          <div style="margin-bottom:6px"><strong>Bord 2</strong> — 4-top, enkeltbord</div>
+          <div style="margin-bottom:6px"><strong>Bord 3, 4, 5</strong> — 4-tops · Kombinasjoner: 3+4, 4+5 (8 pers), 3+4+5 (12 pers)</div>
+          <div style="margin-bottom:6px"><strong>Bord 6, 7, 8</strong> — 2-tops rad A · Kombinasjoner: 6+7, 7+8 (4 pers), 6+7+8 (6 pers)</div>
+          <div><strong>Bord 9, 10, 11</strong> — 2-tops rad B · Kombinasjoner: 9+10, 10+11 (4 pers), 9+10+11 (6 pers)</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Generell info</div>
+        <div id="o-info-display" style="font-size:13px;color:var(--text);margin-bottom:12px;min-height:40px;white-space:pre-wrap"></div>
+        <textarea id="o-info-edit" placeholder="Legg inn generell info her — åpningstider, viktige kontakter, rutiner osv..." style="min-height:120px;width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif"></textarea>
+        <div class="action-row" style="margin-top:8px">
+          <button class="btn-primary" onclick="saveGenerellInfo()">Lagre info</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENTS SECTION -->
+  <div id="events" class="section">
+    <div class="sub-nav">
+      <button class="sub-btn" onclick="switchSub('events','e-form',this)">Nytt event</button>
+      <button class="sub-btn active" onclick="switchSub('events','e-cal',this)">Kalender</button>
+    </div>
+
+    <div id="e-form" class="panel">
+      <div class="card">
+        <div class="card-title">Eventdetaljer</div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Navn på event</label>
+            <input type="text" id="e-name" placeholder="F.eks. Boklansering – Per Petterson">
+          </div>
+          <div class="form-group">
+            <label>Dato</label>
+            <input type="date" id="e-date">
+          </div>
+          <div class="form-group">
+            <label>Antall gjester</label>
+            <input type="number" id="e-guests" min="1" placeholder="Antall">
+          </div>
+          <div class="form-group">
+            <label>Starttid</label>
+            <select id="e-start">
+              <option value="08:00">08:00</option>
+              <option value="08:15">08:15</option>
+              <option value="08:30">08:30</option>
+              <option value="08:45">08:45</option>
+              <option value="09:00">09:00</option>
+              <option value="09:15">09:15</option>
+              <option value="09:30">09:30</option>
+              <option value="09:45">09:45</option>
+              <option value="10:00">10:00</option>
+              <option value="10:15">10:15</option>
+              <option value="10:30">10:30</option>
+              <option value="10:45">10:45</option>
+              <option value="11:00">11:00</option>
+              <option value="11:15">11:15</option>
+              <option value="11:30">11:30</option>
+              <option value="11:45">11:45</option>
+              <option value="12:00">12:00</option>
+              <option value="12:15">12:15</option>
+              <option value="12:30">12:30</option>
+              <option value="12:45">12:45</option>
+              <option value="13:00">13:00</option>
+              <option value="13:15">13:15</option>
+              <option value="13:30">13:30</option>
+              <option value="13:45">13:45</option>
+              <option value="14:00">14:00</option>
+              <option value="14:15">14:15</option>
+              <option value="14:30">14:30</option>
+              <option value="14:45">14:45</option>
+              <option value="15:00">15:00</option>
+              <option value="15:15">15:15</option>
+              <option value="15:30">15:30</option>
+              <option value="15:45">15:45</option>
+              <option value="16:00">16:00</option>
+              <option value="16:15">16:15</option>
+              <option value="16:30">16:30</option>
+              <option value="16:45">16:45</option>
+              <option value="17:00">17:00</option>
+              <option value="17:15">17:15</option>
+              <option value="17:30">17:30</option>
+              <option value="17:45">17:45</option>
+              <option value="18:00" selected>18:00</option>
+              <option value="18:15">18:15</option>
+              <option value="18:30">18:30</option>
+              <option value="18:45">18:45</option>
+              <option value="19:00">19:00</option>
+              <option value="19:15">19:15</option>
+              <option value="19:30">19:30</option>
+              <option value="19:45">19:45</option>
+              <option value="20:00">20:00</option>
+              <option value="20:15">20:15</option>
+              <option value="20:30">20:30</option>
+              <option value="20:45">20:45</option>
+              <option value="21:00" selected>21:00</option>
+              <option value="21:15">21:15</option>
+              <option value="21:30">21:30</option>
+              <option value="21:45">21:45</option>
+              <option value="22:00">22:00</option>
+              <option value="22:15">22:15</option>
+              <option value="22:30">22:30</option>
+              <option value="22:45">22:45</option>
+              <option value="23:00">23:00</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sluttid</label>
+            <select id="e-end">
+              <option value="08:00">08:00</option>
+              <option value="08:15">08:15</option>
+              <option value="08:30">08:30</option>
+              <option value="08:45">08:45</option>
+              <option value="09:00">09:00</option>
+              <option value="09:15">09:15</option>
+              <option value="09:30">09:30</option>
+              <option value="09:45">09:45</option>
+              <option value="10:00">10:00</option>
+              <option value="10:15">10:15</option>
+              <option value="10:30">10:30</option>
+              <option value="10:45">10:45</option>
+              <option value="11:00">11:00</option>
+              <option value="11:15">11:15</option>
+              <option value="11:30">11:30</option>
+              <option value="11:45">11:45</option>
+              <option value="12:00">12:00</option>
+              <option value="12:15">12:15</option>
+              <option value="12:30">12:30</option>
+              <option value="12:45">12:45</option>
+              <option value="13:00">13:00</option>
+              <option value="13:15">13:15</option>
+              <option value="13:30">13:30</option>
+              <option value="13:45">13:45</option>
+              <option value="14:00">14:00</option>
+              <option value="14:15">14:15</option>
+              <option value="14:30">14:30</option>
+              <option value="14:45">14:45</option>
+              <option value="15:00">15:00</option>
+              <option value="15:15">15:15</option>
+              <option value="15:30">15:30</option>
+              <option value="15:45">15:45</option>
+              <option value="16:00">16:00</option>
+              <option value="16:15">16:15</option>
+              <option value="16:30">16:30</option>
+              <option value="16:45">16:45</option>
+              <option value="17:00">17:00</option>
+              <option value="17:15">17:15</option>
+              <option value="17:30">17:30</option>
+              <option value="17:45">17:45</option>
+              <option value="18:00">18:00</option>
+              <option value="18:15">18:15</option>
+              <option value="18:30">18:30</option>
+              <option value="18:45">18:45</option>
+              <option value="19:00">19:00</option>
+              <option value="19:15">19:15</option>
+              <option value="19:30">19:30</option>
+              <option value="19:45">19:45</option>
+              <option value="20:00">20:00</option>
+              <option value="20:15">20:15</option>
+              <option value="20:30">20:30</option>
+              <option value="20:45">20:45</option>
+              <option value="21:00" selected>21:00</option>
+              <option value="21:15">21:15</option>
+              <option value="21:30">21:30</option>
+              <option value="21:45">21:45</option>
+              <option value="22:00">22:00</option>
+              <option value="22:15">22:15</option>
+              <option value="22:30">22:30</option>
+              <option value="22:45">22:45</option>
+              <option value="23:00">23:00</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Lokasjon / område</label>
+            <input type="text" id="e-location" placeholder="F.eks. Hele restauranten, Baren, Uteområdet...">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Kontaktinformasjon</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Kontaktperson</label>
+            <input type="text" id="e-contact" placeholder="Navn">
+          </div>
+          <div class="form-group">
+            <label>Telefon</label>
+            <input type="tel" id="e-phone" placeholder="+47">
+          </div>
+          <div class="form-group full">
+            <label>E-post</label>
+            <input type="email" id="e-email" placeholder="epost@eksempel.no">
+          </div>
+          <div class="form-group full">
+            <label>Mat og drikke</label>
+            <textarea id="e-food" placeholder="Beskriv hva som skal serveres, drikkevalg, allergier osv..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label>Notater</label>
+            <textarea id="e-notes" placeholder="Andre kommentarer, utstyr, spesielle behov..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Ansvarsfordeling</div>
+        <div class="resp-row">
+          <div class="resp-label">Møter gjester ved ankomst</div>
+          <input type="text" id="e-r1" placeholder="Navn">
+        </div>
+        <div class="resp-row">
+          <div class="resp-label">Ansvarlig for mat og drikke</div>
+          <input type="text" id="e-r2" placeholder="Navn">
+        </div>
+        <div class="resp-row">
+          <div class="resp-label">Generelt ansvarlig på kvelden</div>
+          <input type="text" id="e-r3" placeholder="Navn">
+        </div>
+        <div class="resp-row">
+          <div class="resp-label">Rydder etter eventet</div>
+          <input type="text" id="e-r4" placeholder="Navn">
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-secondary" onclick="clearEventForm()">Nullstill</button>
+        <button class="btn-primary" id="e-save-btn" onclick="saveEventBooking()">Lagre og legg inn ny</button>
+      </div>
+    </div>
+
+    <div id="e-cal" class="panel active">
+      <div class="card">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="changeMonth('e',-1)">&#8592;</button>
+          <span class="cal-month-title" id="e-month-title"></span>
+          <button class="cal-nav-btn" onclick="changeMonth('e',1)">&#8594;</button>
+        </div>
+        <div class="cal-header">
+          <div class="cal-day-name">man</div><div class="cal-day-name">tir</div>
+          <div class="cal-day-name">ons</div><div class="cal-day-name">tor</div>
+          <div class="cal-day-name">fre</div><div class="cal-day-name">lør</div>
+          <div class="cal-day-name">søn</div>
+        </div>
+        <div class="cal-grid" id="e-cal-grid"><div class="loading"><span class="spinner"></span>Laster...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEETING SECTION -->
+  <div id="meeting" class="section active">
+    <div class="sub-nav">
+      <button class="sub-btn" onclick="switchSub('meeting','m-form',this)">Ny bestilling</button>
+      <button class="sub-btn active" onclick="switchSub('meeting','m-cal',this)">Kalender</button>
+    </div>
+
+    <div id="m-form" class="panel">
+      <div class="card">
+        <div class="card-title">Rom og tid</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Rom</label>
+            <select id="m-room">
+              <option value="">Velg rom...</option>
+              <option>Wenche Selmer (maks 15)</option>
+              <option>Lilla Hansen (maks 12)</option>
+              <option>Christian Norberg-Schulz (maks 70)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Dato</label>
+            <input type="date" id="m-date">
+          </div>
+          <div class="form-group">
+            <label>Ankomsttid</label>
+            <select id="m-arrive">
+              <option value="08:00">08:00</option>
+              <option value="08:15">08:15</option>
+              <option value="08:30">08:30</option>
+              <option value="08:45">08:45</option>
+              <option value="09:00">09:00</option>
+              <option value="09:15">09:15</option>
+              <option value="09:30">09:30</option>
+              <option value="09:45">09:45</option>
+              <option value="10:00">10:00</option>
+              <option value="10:15">10:15</option>
+              <option value="10:30">10:30</option>
+              <option value="10:45">10:45</option>
+              <option value="11:00">11:00</option>
+              <option value="11:15">11:15</option>
+              <option value="11:30">11:30</option>
+              <option value="11:45">11:45</option>
+              <option value="12:00" selected>12:00</option>
+              <option value="12:15">12:15</option>
+              <option value="12:30">12:30</option>
+              <option value="12:45">12:45</option>
+              <option value="13:00" selected>13:00</option>
+              <option value="13:15">13:15</option>
+              <option value="13:30">13:30</option>
+              <option value="13:45">13:45</option>
+              <option value="14:00">14:00</option>
+              <option value="14:15">14:15</option>
+              <option value="14:30">14:30</option>
+              <option value="14:45">14:45</option>
+              <option value="15:00">15:00</option>
+              <option value="15:15">15:15</option>
+              <option value="15:30">15:30</option>
+              <option value="15:45">15:45</option>
+              <option value="16:00">16:00</option>
+              <option value="16:15">16:15</option>
+              <option value="16:30">16:30</option>
+              <option value="16:45">16:45</option>
+              <option value="17:00">17:00</option>
+              <option value="17:15">17:15</option>
+              <option value="17:30">17:30</option>
+              <option value="17:45">17:45</option>
+              <option value="18:00">18:00</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sluttid</label>
+            <select id="m-end">
+              <option value="08:00">08:00</option>
+              <option value="08:15">08:15</option>
+              <option value="08:30">08:30</option>
+              <option value="08:45">08:45</option>
+              <option value="09:00">09:00</option>
+              <option value="09:15">09:15</option>
+              <option value="09:30">09:30</option>
+              <option value="09:45">09:45</option>
+              <option value="10:00">10:00</option>
+              <option value="10:15">10:15</option>
+              <option value="10:30">10:30</option>
+              <option value="10:45">10:45</option>
+              <option value="11:00">11:00</option>
+              <option value="11:15">11:15</option>
+              <option value="11:30">11:30</option>
+              <option value="11:45">11:45</option>
+              <option value="12:00" selected>12:00</option>
+              <option value="12:15">12:15</option>
+              <option value="12:30">12:30</option>
+              <option value="12:45">12:45</option>
+              <option value="13:00" selected>13:00</option>
+              <option value="13:15">13:15</option>
+              <option value="13:30">13:30</option>
+              <option value="13:45">13:45</option>
+              <option value="14:00">14:00</option>
+              <option value="14:15">14:15</option>
+              <option value="14:30">14:30</option>
+              <option value="14:45">14:45</option>
+              <option value="15:00">15:00</option>
+              <option value="15:15">15:15</option>
+              <option value="15:30">15:30</option>
+              <option value="15:45">15:45</option>
+              <option value="16:00">16:00</option>
+              <option value="16:15">16:15</option>
+              <option value="16:30">16:30</option>
+              <option value="16:45">16:45</option>
+              <option value="17:00">17:00</option>
+              <option value="17:15">17:15</option>
+              <option value="17:30">17:30</option>
+              <option value="17:45">17:45</option>
+              <option value="18:00">18:00</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <div class="checkbox-row">
+              <input type="checkbox" id="m-diffarrive" onchange="toggleDiffArrive()">
+              <label for="m-diffarrive">Ulik ankomsttid for møteleder og deltakere</label>
+            </div>
+            <div class="diff-arrival" id="diff-arrival-box">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Møteleder ankommer</label>
+                  <select id="m-host-arrive">
+                  <option value="08:00">08:00</option>
+              <option value="08:15">08:15</option>
+              <option value="08:30">08:30</option>
+              <option value="08:45">08:45</option>
+              <option value="09:00">09:00</option>
+              <option value="09:15">09:15</option>
+              <option value="09:30">09:30</option>
+              <option value="09:45">09:45</option>
+              <option value="10:00">10:00</option>
+              <option value="10:15">10:15</option>
+              <option value="10:30">10:30</option>
+              <option value="10:45">10:45</option>
+              <option value="11:00">11:00</option>
+              <option value="11:15">11:15</option>
+              <option value="11:30">11:30</option>
+              <option value="11:45">11:45</option>
+              <option value="12:00" selected>12:00</option>
+              <option value="12:15">12:15</option>
+              <option value="12:30">12:30</option>
+              <option value="12:45">12:45</option>
+              <option value="13:00" selected>13:00</option>
+              <option value="13:15">13:15</option>
+              <option value="13:30">13:30</option>
+              <option value="13:45">13:45</option>
+              <option value="14:00">14:00</option>
+              <option value="14:15">14:15</option>
+              <option value="14:30">14:30</option>
+              <option value="14:45">14:45</option>
+              <option value="15:00">15:00</option>
+              <option value="15:15">15:15</option>
+              <option value="15:30">15:30</option>
+              <option value="15:45">15:45</option>
+              <option value="16:00">16:00</option>
+              <option value="16:15">16:15</option>
+              <option value="16:30">16:30</option>
+              <option value="16:45">16:45</option>
+              <option value="17:00">17:00</option>
+              <option value="17:15">17:15</option>
+              <option value="17:30">17:30</option>
+              <option value="17:45">17:45</option>
+              <option value="18:00">18:00</option>
+                </select>
+                </div>
+                <div class="form-group">
+                  <label>Deltakere ankommer</label>
+                  <select id="m-guest-arrive">
+                  <option value="08:00">08:00</option>
+              <option value="08:15">08:15</option>
+              <option value="08:30">08:30</option>
+              <option value="08:45">08:45</option>
+              <option value="09:00">09:00</option>
+              <option value="09:15">09:15</option>
+              <option value="09:30">09:30</option>
+              <option value="09:45">09:45</option>
+              <option value="10:00">10:00</option>
+              <option value="10:15">10:15</option>
+              <option value="10:30">10:30</option>
+              <option value="10:45">10:45</option>
+              <option value="11:00">11:00</option>
+              <option value="11:15">11:15</option>
+              <option value="11:30">11:30</option>
+              <option value="11:45">11:45</option>
+              <option value="12:00" selected>12:00</option>
+              <option value="12:15">12:15</option>
+              <option value="12:30">12:30</option>
+              <option value="12:45">12:45</option>
+              <option value="13:00" selected>13:00</option>
+              <option value="13:15">13:15</option>
+              <option value="13:30">13:30</option>
+              <option value="13:45">13:45</option>
+              <option value="14:00">14:00</option>
+              <option value="14:15">14:15</option>
+              <option value="14:30">14:30</option>
+              <option value="14:45">14:45</option>
+              <option value="15:00">15:00</option>
+              <option value="15:15">15:15</option>
+              <option value="15:30">15:30</option>
+              <option value="15:45">15:45</option>
+              <option value="16:00">16:00</option>
+              <option value="16:15">16:15</option>
+              <option value="16:30">16:30</option>
+              <option value="16:45">16:45</option>
+              <option value="17:00">17:00</option>
+              <option value="17:15">17:15</option>
+              <option value="17:30">17:30</option>
+              <option value="17:45">17:45</option>
+              <option value="18:00">18:00</option>
+                </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Pakke og gjester</div>
+        <div class="form-group" style="margin-bottom:1.25rem;max-width:160px">
+          <label>Antall gjester</label>
+          <input type="number" id="m-guests" min="1" placeholder="Antall">
+        </div>
+        <div style="margin-bottom:10px">
+          <div class="checkbox-row">
+            <input type="checkbox" id="m-nopkg" onchange="toggleNoPkg()">
+            <label for="m-nopkg">Ingen pakke</label>
+          </div>
+        </div>
+        <div class="pkg-grid" id="pkg-grid">
+          <button class="pkg-card" onclick="selectPkg(1)" id="pkg1" type="button">
+            <div class="pkg-name">Pakke 1 – Kaffe</div>
+            <div class="pkg-price">115,- eks. mva / person</div>
+            <div class="pkg-desc">Kaffe, te og vann med påfyll gjennom dagen</div>
+          </button>
+          <button class="pkg-card" onclick="selectPkg(2)" id="pkg2" type="button">
+            <div class="pkg-name">Pakke 2 – Kaffe og enkel servering</div>
+            <div class="pkg-price">195,- eks. mva / person</div>
+            <div class="pkg-desc">Kaffe/te/vann + fruktfat og søtt bakverk fra møtestart</div>
+          </button>
+          <button class="pkg-card" onclick="selectPkg(3)" id="pkg3" type="button">
+            <div class="pkg-name">Pakke 3 – Brødmat</div>
+            <div class="pkg-price">390,- eks. mva / person</div>
+            <div class="pkg-desc">Kaffe/te/vann + frukt/bakverk + brødlunsj + søtt etter lunsj</div>
+          </button>
+          <button class="pkg-card" onclick="selectPkg(4)" id="pkg4" type="button">
+            <div class="pkg-name">Pakke 4 – Lunsj fra Magnolia</div>
+            <div class="pkg-price">510,- eks. mva / person</div>
+            <div class="pkg-desc">Kaffe/te/vann + frukt/bakverk + Magnolia-lunsj + søtt etter lunsj</div>
+          </button>
+        </div>
+        <div class="conditional-lunch" id="lunch-times">
+          <div class="form-grid" style="margin-top:4px">
+            <div class="form-group">
+              <label>Lunsj serveres kl.</label>
+              <select id="m-lunch">
+              <option value="08:00">08:00</option>
+              <option value="08:15">08:15</option>
+              <option value="08:30">08:30</option>
+              <option value="08:45">08:45</option>
+              <option value="09:00">09:00</option>
+              <option value="09:15">09:15</option>
+              <option value="09:30">09:30</option>
+              <option value="09:45">09:45</option>
+              <option value="10:00">10:00</option>
+              <option value="10:15">10:15</option>
+              <option value="10:30">10:30</option>
+              <option value="10:45">10:45</option>
+              <option value="11:00">11:00</option>
+              <option value="11:15">11:15</option>
+              <option value="11:30">11:30</option>
+              <option value="11:45">11:45</option>
+              <option value="12:00" selected>12:00</option>
+              <option value="12:15">12:15</option>
+              <option value="12:30">12:30</option>
+              <option value="12:45">12:45</option>
+              <option value="13:00" selected>13:00</option>
+              <option value="13:15">13:15</option>
+              <option value="13:30">13:30</option>
+              <option value="13:45">13:45</option>
+              <option value="14:00">14:00</option>
+              <option value="14:15">14:15</option>
+              <option value="14:30">14:30</option>
+              <option value="14:45">14:45</option>
+              <option value="15:00">15:00</option>
+              <option value="15:15">15:15</option>
+              <option value="15:30">15:30</option>
+              <option value="15:45">15:45</option>
+              <option value="16:00">16:00</option>
+              <option value="16:15">16:15</option>
+              <option value="16:30">16:30</option>
+              <option value="16:45">16:45</option>
+              <option value="17:00">17:00</option>
+              <option value="17:15">17:15</option>
+              <option value="17:30">17:30</option>
+              <option value="17:45">17:45</option>
+              <option value="18:00">18:00</option>
+            </select>
+            </div>
+            <div class="form-group">
+              <label>Søtt etter lunsj serveres kl.</label>
+              <select id="m-sweet">
+              <option value="08:00">08:00</option>
+              <option value="08:15">08:15</option>
+              <option value="08:30">08:30</option>
+              <option value="08:45">08:45</option>
+              <option value="09:00">09:00</option>
+              <option value="09:15">09:15</option>
+              <option value="09:30">09:30</option>
+              <option value="09:45">09:45</option>
+              <option value="10:00">10:00</option>
+              <option value="10:15">10:15</option>
+              <option value="10:30">10:30</option>
+              <option value="10:45">10:45</option>
+              <option value="11:00">11:00</option>
+              <option value="11:15">11:15</option>
+              <option value="11:30">11:30</option>
+              <option value="11:45">11:45</option>
+              <option value="12:00">12:00</option>
+              <option value="12:15">12:15</option>
+              <option value="12:30">12:30</option>
+              <option value="12:45">12:45</option>
+              <option value="13:00" selected>13:00</option>
+              <option value="13:15">13:15</option>
+              <option value="13:30">13:30</option>
+              <option value="13:45">13:45</option>
+              <option value="14:00">14:00</option>
+              <option value="14:15">14:15</option>
+              <option value="14:30">14:30</option>
+              <option value="14:45">14:45</option>
+              <option value="15:00">15:00</option>
+              <option value="15:15">15:15</option>
+              <option value="15:30">15:30</option>
+              <option value="15:45">15:45</option>
+              <option value="16:00">16:00</option>
+              <option value="16:15">16:15</option>
+              <option value="16:30">16:30</option>
+              <option value="16:45">16:45</option>
+              <option value="17:00">17:00</option>
+              <option value="17:15">17:15</option>
+              <option value="17:30">17:30</option>
+              <option value="17:45">17:45</option>
+              <option value="18:00">18:00</option>
+            </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Tolk mail</div>
+        <div class="form-group full">
+          <label>Lim inn tekst fra mail</label>
+          <textarea id="m-mail-input" placeholder="Lim inn mailtekst her — Claude fyller ut feltene automatisk uten å overskrive eksisterende data..." style="min-height:100px"></textarea>
+        </div>
+        <div class="action-row" style="margin-top:8px">
+          <button class="btn-secondary" id="m-parse-btn" onclick="parseMailMeeting()">Tolk mail</button>
+        </div>
+        <div id="m-parse-status" style="font-size:12px;color:var(--text-muted);margin-top:6px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Kontaktinformasjon</div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Firmanavn</label>
+            <input type="text" id="m-company" placeholder="Bedrift / organisasjon">
+          </div>
+          <div class="form-group">
+            <label>Kontaktperson</label>
+            <input type="text" id="m-contact" placeholder="Navn">
+          </div>
+          <div class="form-group">
+            <label>Telefon</label>
+            <input type="tel" id="m-phone" placeholder="+47">
+          </div>
+          <div class="form-group full">
+            <label>E-post</label>
+            <input type="email" id="m-email" placeholder="epost@eksempel.no">
+          </div>
+          <div class="form-group full">
+            <label>Allergier og spesielle behov</label>
+            <textarea id="m-allergies" placeholder="Beskriv allergier, dietter eller andre behov..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label>Andre notater</label>
+            <textarea id="m-notes" placeholder="Øvrige kommentarer..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Ansvarsfordeling</div>
+        <div class="resp-row">
+          <div class="resp-label">Møter gjester ved ankomst</div>
+          <input type="text" id="r1" placeholder="Navn">
+        </div>
+        <div class="resp-row">
+          <div class="resp-label">Serverer kaffe / te / frukt / bakverk ved møtestart</div>
+          <input type="text" id="r2" placeholder="Navn">
+        </div>
+        <div class="resp-row">
+          <div class="resp-label">Sjekker inn i løpet av dagen</div>
+          <input type="text" id="r3" placeholder="Navn">
+        </div>
+        <div class="resp-row">
+          <div class="resp-label">Serverer lunsj</div>
+          <input type="text" id="r4" placeholder="Navn">
+        </div>
+        <div class="resp-row">
+          <div class="resp-label">Serverer søtt etter lunsj</div>
+          <input type="text" id="r5" placeholder="Navn">
+        </div>
+        <div class="resp-row">
+          <div class="resp-label">Rydder etter møtet</div>
+          <input type="text" id="r6" placeholder="Navn">
+        </div>
+        <p style="font-size:12px;color:var(--text-hint);margin-top:14px;font-style:italic">Romoppsett avtales separat med bookingagent (Momentus).</p>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-secondary" onclick="clearMeetingForm()">Nullstill</button>
+        <button class="btn-primary" id="m-save-btn" onclick="saveMeetingBooking()">Lagre og legg inn ny</button>
+      </div>
+    </div>
+
+    <div id="m-cal" class="panel active">
+      <div class="card">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="changeMonth('m',-1)">&#8592;</button>
+          <span class="cal-month-title" id="m-month-title"></span>
+          <button class="cal-nav-btn" onclick="changeMonth('m',1)">&#8594;</button>
+        </div>
+        <div class="cal-header">
+          <div class="cal-day-name">man</div><div class="cal-day-name">tir</div>
+          <div class="cal-day-name">ons</div><div class="cal-day-name">tor</div>
+          <div class="cal-day-name">fre</div><div class="cal-day-name">lør</div>
+          <div class="cal-day-name">søn</div>
+        </div>
+        <div class="cal-grid" id="m-cal-grid"><div class="loading"><span class="spinner"></span>Laster...</div></div>
+      </div>
+      <div id="m-day-detail" style="display:none;visibility:hidden">
+        <div class="card">
+          <div class="day-detail-header">
+            <div class="day-detail-title" id="m-day-title"></div>
+            <div class="day-detail-sub" id="m-day-sub"></div>
+          </div>
+          <div class="booking-list" id="m-booking-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESTAURANT SECTION -->
+  <div id="restaurant" class="section">
+    <div class="sub-nav">
+      <button class="sub-btn" onclick="switchSub('restaurant','r-form',this)">Ny bestilling</button>
+      <button class="sub-btn active" onclick="switchSub('restaurant','r-cal',this)">Kalender</button>
+    </div>
+
+    <div id="r-form" class="panel">
+      <div class="card">
+        <div class="card-title">Bestillingsdetaljer</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Dato</label>
+            <input type="date" id="r-date" onchange="updateAvailableTables()">
+          </div>
+          <div class="form-group">
+            <label>Ankomsttid</label>
+            <input type="time" id="r-arrive" value="12:00" min="11:00" max="19:00" onchange="updateAvailableTables()">
+          </div>
+          <div class="form-group">
+            <label>Varighet (ønsket bordtid)</label>
+            <select id="r-seat" onchange="updateAvailableTables()">
+              <option value="1t">1 time</option>
+              <option value="1t30">1 time 30 min</option>
+              <option value="2t" selected>2 timer</option>
+              <option value="2t30">2 timer 30 min</option>
+              <option value="3t">3 timer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Antall gjester</label>
+            <input type="number" id="r-guests" min="1" placeholder="Antall">
+          </div>
+          <div class="form-group full">
+            <label>Velg bord</label>
+            <select id="r-table" style="background:var(--surface)">
+              <option value="">-- Velg dato, tid og varighet først --</option>
+            </select>
+            <div id="r-table-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
+          </div>
+          <div class="form-group" style="justify-content:flex-end">
+            <label>&nbsp;</label>
+            <div class="checkbox-row">
+              <input type="checkbox" id="r-vip">
+              <label for="r-vip" style="font-size:14px;font-weight:500">VIP</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Gjesteinformasjon</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Navn</label>
+            <input type="text" id="r-name" placeholder="Fullt navn">
+          </div>
+          <div class="form-group">
+            <label>Telefon</label>
+            <input type="tel" id="r-phone" placeholder="+47">
+          </div>
+          <div class="form-group full">
+            <label>E-post</label>
+            <input type="email" id="r-email" placeholder="epost@eksempel.no">
+          </div>
+          <div class="form-group full">
+            <label>Bedrift / selskap</label>
+            <input type="text" id="r-company" placeholder="Firmanavn">
+          </div>
+          <div class="form-group full">
+            <label>Allergier og spesielle behov</label>
+            <textarea id="r-allergies" placeholder="Beskriv allergier, dietter eller andre behov..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label>Spesielle notater</label>
+            <textarea id="r-notes" placeholder="Andre kommentarer..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-secondary" onclick="clearRestForm()">Nullstill</button>
+        <button class="btn-primary" id="r-save-btn" onclick="saveRestBooking()">Lagre og legg inn ny</button>
+      </div>
+    </div>
+
+    <div id="r-cal" class="panel active">
+      <div class="card">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="changeMonth('r',-1)">&#8592;</button>
+          <span class="cal-month-title" id="r-month-title"></span>
+          <button class="cal-nav-btn" onclick="changeMonth('r',1)">&#8594;</button>
+        </div>
+        <div class="cal-header">
+          <div class="cal-day-name">man</div><div class="cal-day-name">tir</div>
+          <div class="cal-day-name">ons</div><div class="cal-day-name">tor</div>
+          <div class="cal-day-name">fre</div><div class="cal-day-name">lør</div>
+          <div class="cal-day-name">søn</div>
+        </div>
+        <div class="cal-grid" id="r-cal-grid"><div class="loading"><span class="spinner"></span>Laster...</div></div>
+      </div>
+      <div id="r-day-detail" style="display:none;visibility:hidden">
+        <div class="card">
+          <div class="day-detail-header">
+            <div class="day-detail-title" id="r-day-title"></div>
+            <div class="day-detail-sub" id="r-day-sub"></div>
+          </div>
+          <div class="booking-list" id="r-booking-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<!-- REVENUE MODAL -->
+<div class="modal-overlay" id="revenue-modal" onclick="closeRevenueModal(event)" style="display:none">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div class="modal-title">Omsetningsoversikt</div>
+      <button class="modal-close" onclick="closeRevenueModal()">&#215;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
+      <div>
+        <div class="detail-section-title" style="margin-bottom:6px">Vis dato</div>
+        <input type="date" id="rev-date" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif" onchange="renderRevenue()">
+      </div>
+      <div>
+        <div class="detail-section-title" style="margin-bottom:6px">Vis måned</div>
+        <input type="month" id="rev-month" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif" onchange="renderRevenue()">
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title">Møterom — innstillinger</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+        <div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.03em">Kostpris Pk1 (kr/pers)</label><input type="number" id="cost1" value="40" style="width:100%;margin-top:4px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px" onchange="renderRevenue()"></div>
+        <div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.03em">Kostpris Pk2 (kr/pers)</label><input type="number" id="cost2" value="70" style="width:100%;margin-top:4px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px" onchange="renderRevenue()"></div>
+        <div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.03em">Kostpris Pk3 (kr/pers)</label><input type="number" id="cost3" value="150" style="width:100%;margin-top:4px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px" onchange="renderRevenue()"></div>
+        <div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.03em">Kostpris Pk4 (kr/pers)</label><input type="number" id="cost4" value="200" style="width:100%;margin-top:4px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px" onchange="renderRevenue()"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title">Restaurant — innstillinger</div>
+      <div><label style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.03em">Snitt spend per gjest (kr)</label><input type="number" id="r-avg" value="350" style="width:160px;margin-top:4px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px" onchange="renderRevenue()"></div>
+    </div>
+
+    <div id="revenue-results"></div>
+
+    <hr style="border:none;border-top:1px solid var(--border);margin:1rem 0">
+    <div class="card-title" style="margin-bottom:1rem">Månedsoversikt møterom</div>
+    <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+      <select id="rev-month-detail" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text)" onchange="renderMonthDetail()">
+      </select>
+    </div>
+    <div id="month-detail-results"></div>
+
+    <hr style="border:none;border-top:1px solid var(--border);margin:1rem 0">
+    <div class="card-title" style="margin-bottom:0.75rem">Fremtidsestimater</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:0.75rem">Sett forventet antall bookinger per kommende måned</div>
+    <div id="future-estimates-inputs"></div>
+    <div id="future-estimates-results" style="margin-top:1rem"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" onclick="closeModal()">&#215;</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://odghglslcuscbbqhnpns.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kZ2hnbHNsY3VzY2JicWhucG5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NzQ1MzgsImV4cCI6MjA5MzU1MDUzOH0.4rrzrJlcK7uZCuocwPYlRDz_GC9gA5feMiGC7HHXMxw';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let mBookings = [];
+let rBookings = [];
+let mCurDate = new Date();
+let rCurDate = new Date();
+let selPkg = 0;
+
+const pkgNames = ['','Pakke 1 – Kaffe','Pakke 2 – Kaffe og enkel servering','Pakke 3 – Brødmat','Pakke 4 – Lunsj fra Magnolia'];
+const months = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+const norDays = ['man','tir','ons','tor','fre','lør','søn'];
+
+function showToast(msg, isError=false){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError?' error':'') + ' show';
+  setTimeout(()=>t.className='toast',2800);
+}
+
+function switchMain(id, btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.top-nav .nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id+'-section')||document.getElementById(id) ? 
+    (document.getElementById(id+'-section')||document.getElementById(id)).classList.add('active') : null;
+  btn.classList.add('active');
+  if(id==='meeting') loadAndRenderMCal();
+  if(id==='restaurant') loadAndRenderRCal();
+  if(id==='today'){
+    const _n=new Date();
+    const _p=n=>String(n).padStart(2,'0');
+    overviewDateStr=_n.getFullYear()+'-'+_p(_n.getMonth()+1)+'-'+_p(_n.getDate());
+    miniCalDate=new Date(_n.getFullYear(),_n.getMonth(),1);
+    document.getElementById('overview-date').value=overviewDateStr;
+    renderMiniCal();
+    renderToday();
+  }
+  if(id==='events') loadAndRenderECal();
+  if(id==='oppslagstavle'){ loadOppslagstavle().then(()=>{ renderOHistory(); renderCheckout(); }); loadGenerellInfo(); }
+}
+
+
+function switchSub(section, panel, btn){
+  const sec = document.getElementById(section);
+  sec.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  sec.querySelectorAll('.sub-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(panel).classList.add('active');
+  btn.classList.add('active');
+  if(panel==='m-cal') loadAndRenderMCal();
+  if(panel==='r-cal') loadAndRenderRCal();
+}
+
+function toggleDiffArrive(){
+  document.getElementById('diff-arrival-box').classList.toggle('show', document.getElementById('m-diffarrive').checked);
+}
+
+function selectPkg(n){
+  document.getElementById('m-nopkg').checked = false;
+  document.getElementById('m-mail-input').value='';
+  document.getElementById('m-parse-status').textContent='';
+  document.getElementById('pkg-grid').style.opacity = '1';
+  document.getElementById('pkg-grid').style.pointerEvents = 'auto';
+  selPkg = n;
+  document.querySelectorAll('.pkg-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('pkg'+n).classList.add('selected');
+  document.getElementById('lunch-times').classList.toggle('show', n>=3);
+}
+
+function toggleNoPkg(){
+  const noPkg = document.getElementById('m-nopkg').checked;
+  if(noPkg){
+    selPkg = 0;
+    document.querySelectorAll('.pkg-card').forEach(c=>c.classList.remove('selected'));
+    document.getElementById('lunch-times').classList.remove('show');
+    document.getElementById('pkg-grid').style.opacity = '0.35';
+    document.getElementById('pkg-grid').style.pointerEvents = 'none';
+  } else {
+    document.getElementById('pkg-grid').style.opacity = '1';
+    document.getElementById('pkg-grid').style.pointerEvents = 'auto';
+  }
+}
+
+// ---- MEETING BOOKINGS ----
+async function loadMBookings(){
+  const { data, error } = await sb.from('meeting_bookings').select('*');
+  if(error){ showToast('Feil ved lasting av møtebooking', true); return; }
+  mBookings = data || [];
+}
+
+async function saveMeetingBooking(){
+  const room = document.getElementById('m-room').value;
+  const date = document.getElementById('m-date').value;
+  if(!room||!date){ showToast('Velg rom og dato.', true); return; }
+  const noPkg = document.getElementById('m-nopkg').checked;
+  if(!selPkg && !noPkg){ showToast('Velg en pakke, eller huk av "Ingen pakke".', true); document.getElementById('pkg-grid').scrollIntoView({behavior:'smooth'}); return; }
+  const btn = document.getElementById('m-save-btn');
+  btn.disabled = true; btn.textContent = 'Lagrer...';
+  const record = {
+    room, date,
+    arrive: document.getElementById('m-arrive').value,
+    finish: document.getElementById('m-end').value,
+    diff_arrive: document.getElementById('m-diffarrive').checked,
+    host_arrive: document.getElementById('m-host-arrive').value,
+    guest_arrive: document.getElementById('m-guest-arrive').value,
+    pkg: selPkg,
+    guests: parseInt(document.getElementById('m-guests').value)||null,
+    lunch_time: document.getElementById('m-lunch').value,
+    sweet_time: document.getElementById('m-sweet').value,
+    contact: document.getElementById('m-contact').value,
+    phone: document.getElementById('m-phone').value,
+    email: document.getElementById('m-email').value,
+    company: document.getElementById('m-company').value,
+    allergies: document.getElementById('m-allergies').value,
+    notes: document.getElementById('m-notes').value,
+    resp: {
+      r1: document.getElementById('r1').value,
+      r2: document.getElementById('r2').value,
+      r3: document.getElementById('r3').value,
+      r4: document.getElementById('r4').value,
+      r5: document.getElementById('r5').value,
+      r6: document.getElementById('r6').value
+    }
+  };
+  const { error } = await sb.from('meeting_bookings').insert([record]);
+  btn.disabled = false; btn.textContent = 'Lagre bestilling';
+  if(error){ showToast('Feil ved lagring: '+error.message, true); return; }
+  showToast('Møtebestilling lagret!');
+  clearMeetingForm();
+  await loadMBookings();
+  renderMCal();
+  const mSubBtns = document.querySelectorAll('#meeting .sub-btn');
+  mSubBtns.forEach(b=>b.classList.remove('active'));
+  mSubBtns[0].classList.add('active');
+  document.querySelectorAll('#meeting .panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('m-form').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function deleteMBooking(id, date){
+  if(!confirm('Slette denne bestillingen?')) return;
+  const { error } = await sb.from('meeting_bookings').delete().eq('id', id);
+  if(error){ showToast('Feil ved sletting', true); return; }
+  showToast('Bestilling slettet');
+  await loadMBookings();
+  renderMCal();
+  showMDay(date);
+}
+
+// ---- RESTAURANT BOOKINGS ----
+async function loadRBookings(){
+  const { data, error } = await sb.from('restaurant_bookings').select('*');
+  if(error){ showToast('Feil ved lasting av restaurantbooking', true); return; }
+  rBookings = data || [];
+}
+
+async function saveRestBooking(){
+  const date = document.getElementById('r-date').value;
+  const name = document.getElementById('r-name').value;
+  if(!date||!name){ showToast('Fyll inn dato og navn.', true); return; }
+  const btn = document.getElementById('r-save-btn');
+  btn.disabled = true; btn.textContent = 'Lagrer...';
+  const record = {
+    date,
+    arrive: document.getElementById('r-arrive').value,
+    seat: document.getElementById('r-seat').value,
+    guests: parseInt(document.getElementById('r-guests').value)||null,
+    table_nr: document.getElementById('r-table').value,
+    vip: document.getElementById('r-vip').checked,
+    name,
+    phone: document.getElementById('r-phone').value,
+    email: document.getElementById('r-email').value,
+    company: document.getElementById('r-company').value,
+    allergies: document.getElementById('r-allergies').value,
+    notes: document.getElementById('r-notes').value
+  };
+  const { error } = await sb.from('restaurant_bookings').insert([record]);
+  btn.disabled = false; btn.textContent = 'Lagre bestilling';
+  if(error){ showToast('Feil ved lagring: '+error.message, true); return; }
+  showToast('Restaurantbestilling lagret!');
+  clearRestForm();
+  await loadRBookings();
+  renderRCal();
+  const rSubBtns = document.querySelectorAll('#restaurant .sub-btn');
+  rSubBtns.forEach(b=>b.classList.remove('active'));
+  rSubBtns[0].classList.add('active');
+  document.querySelectorAll('#restaurant .panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('r-form').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function deleteRBooking(id, date){
+  if(!confirm('Slette denne bestillingen?')) return;
+  const { error } = await sb.from('restaurant_bookings').delete().eq('id', id);
+  if(error){ showToast('Feil ved sletting', true); return; }
+  showToast('Bestilling slettet');
+  await loadRBookings();
+  renderRCal();
+  showRDay(date);
+}
+
+// ---- CLEAR FORMS ----
+function clearMeetingForm(){
+  ['m-room','m-date','m-arrive','m-end','m-guests','m-company','m-contact','m-phone','m-email','m-allergies','m-notes','m-lunch','m-sweet','m-host-arrive','m-guest-arrive','r1','r2','r3','r4','r5','r6'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('m-diffarrive').checked = false;
+  document.getElementById('diff-arrival-box').classList.remove('show');
+  document.getElementById('lunch-times').classList.remove('show');
+  document.querySelectorAll('.pkg-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('m-nopkg').checked = false;
+  document.getElementById('m-mail-input').value='';
+  document.getElementById('m-parse-status').textContent='';
+  document.getElementById('pkg-grid').style.opacity = '1';
+  document.getElementById('pkg-grid').style.pointerEvents = 'auto';
+  selPkg = 0;
+}
+
+function clearRestForm(){
+  ['r-date','r-arrive','r-seat','r-guests','r-table','r-name','r-phone','r-email','r-company','r-allergies','r-notes'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('r-vip').checked = false;
+}
+
+// ---- CALENDAR ----
+function buildCal(gridId, titleId, curDate, bookings, onDayClick, labelFn){
+  const grid = document.getElementById(gridId);
+  const title = document.getElementById(titleId);
+  title.textContent = months[curDate.getMonth()] + ' ' + curDate.getFullYear();
+  const year = curDate.getFullYear(), month = curDate.getMonth();
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month+1, 0);
+  let startDay = (first.getDay()+6)%7;
+  grid.innerHTML = '';
+  const today = new Date();
+
+  for(let i=0; i<startDay; i++){
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.innerHTML = '<div class="cal-day-num">'+(new Date(year,month,1-startDay+i).getDate())+'</div>';
+    grid.appendChild(d);
+  }
+  for(let day=1; day<=last.getDate(); day++){
+    const dateStr = year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    const dayBkgs = bookings.filter(b=>b.date===dateStr);
+    const d = document.createElement('div');
+    let cls = 'cal-day';
+    if(dayBkgs.length) cls += ' has-booking';
+    if(today.getFullYear()===year&&today.getMonth()===month&&today.getDate()===day) cls += ' today';
+    d.className = cls;
+    const allBkgs = [...mBookings,...rBookings,...eBookings].filter(b=>b.date===dateStr);
+    d.innerHTML = '<div class="cal-day-num">'+day+'</div>'+(allBkgs.length?'<div class="cal-pip"></div>':'')+(dayBkgs.length?'<div class="cal-count" style="text-align:left;padding:0 2px">'+labelFn(dayBkgs)+'</div>':'');
+    d.onclick = ()=>onDayClick(dateStr);
+    grid.appendChild(d);
+  }
+  const remaining = (7-((startDay+last.getDate())%7))%7;
+  for(let i=1; i<=remaining; i++){
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.innerHTML = '<div class="cal-day-num">'+i+'</div>';
+    grid.appendChild(d);
+  }
+}
+
+function renderMCal(){
+  buildCal('m-cal-grid','m-month-title',mCurDate,mBookings,showMDay,
+    b=>b.sort((a,c)=>a.arrive>c.arrive?1:-1).map(x=>'Pk'+x.pkg+': '+(x.guests||'?')+' pers').join('<br>'))
+}
+function renderRCal(){
+  buildCal('r-cal-grid','r-month-title',rCurDate,rBookings,showRDay,
+    b=>{const t=b.reduce((s,x)=>s+(parseInt(x.guests)||0),0);return t+' gjest'+(t!==1?'er':'');});
+}
+
+async function loadAndRenderMCal(){
+  await loadMBookings(); renderMCal();
+}
+async function loadAndRenderRCal(){
+  await loadRBookings(); renderRCal();
+}
+
+function changeMonth(type, dir){
+  if(type==='m'){ mCurDate=new Date(mCurDate.getFullYear(),mCurDate.getMonth()+dir,1); renderMCal(); }
+  else if(type==='r'){ rCurDate=new Date(rCurDate.getFullYear(),rCurDate.getMonth()+dir,1); renderRCal(); }
+  else if(type==='e'){ eCurDate=new Date(eCurDate.getFullYear(),eCurDate.getMonth()+dir,1); renderECal(); }
+}
+
+function showMDay(dateStr){
+  overviewDateStr = dateStr;
+  document.getElementById('overview-date').value = dateStr;
+  const navBtns = document.querySelectorAll('.top-nav .nav-btn');
+  navBtns.forEach(b=>b.classList.remove('active'));
+  navBtns[0].classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('today-section').classList.add('active');
+  renderToday();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showRDay(dateStr){
+  overviewDateStr = dateStr;
+  document.getElementById('overview-date').value = dateStr;
+  const navBtns = document.querySelectorAll('.top-nav .nav-btn');
+  navBtns.forEach(b=>b.classList.remove('active'));
+  navBtns[0].classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('today-section').classList.add('active');
+  renderToday();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showMDetail(id){
+  const b = mBookings.find(x=>x.id===id); if(!b) return;
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  const todayStr = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+  const afterSeventeen = now.getHours()>=17;
+  const _tom = new Date(now); _tom.setDate(_tom.getDate()+1);
+  const tomorrowStr = _tom.getFullYear()+'-'+pad(_tom.getMonth()+1)+'-'+pad(_tom.getDate());
+  const isTomorrowBooking = b.date===tomorrowStr && afterSeventeen;
+  const guests = parseInt(b.guests)||0;
+
+  if(isTomorrowBooking){
+    document.getElementById('modal-title').textContent = 'Klargjøring — '+b.room.split(' (')[0];
+    document.getElementById('modal-body').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">${b.date} · kl. ${b.arrive} · ${guests} gjester</div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:1rem">${b.company||b.contact||''} · Pakke ${b.pkg}</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Servise som skal inn på rommet</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer"><input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent)"> ${guests} kaffekopper + skåler</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer"><input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent)"> ${guests} vannglass</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer"><input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent)"> ${guests} små tallerkner</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer"><input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent)"> ${guests} servietter</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer"><input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent)"> Et utvalg tekopper + skåler</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer"><input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent)"> Vannkarafler klare på rommet</label>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="detail-section">
+      <div class="detail-section-title">Romtilstand</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer"><input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent)"> Bord rent og fritt for flekker</label>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer"><input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent)"> Alt gammelt servise ryddet og vasket</label>
+      </div>
+    </div>
+    ${b.allergies?'<hr class="divider"><div class="detail-section"><div class="detail-section-title" style="color:var(--danger)">⚠ Allergier</div><div style="font-size:13px;color:var(--text);margin-top:4px">'+b.allergies+'</div></div>':''}
+    `;
+    document.getElementById('modal-overlay').classList.add('show');
+    return;
+  }
+
+  document.getElementById('modal-title').textContent = b.room;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">Tid og pakke</div>
+      <div class="detail-grid">
+        <span class="detail-label">Dato</span><span class="detail-val">${b.date}</span>
+        <span class="detail-label">Tid</span><span class="detail-val">${b.arrive} – ${b.finish}</span>
+        ${b.diff_arrive?`<span class="detail-label">Møteleder</span><span class="detail-val">${b.host_arrive}</span><span class="detail-label">Deltakere</span><span class="detail-val">${b.guest_arrive}</span>`:''}
+        <span class="detail-label">Pakke</span><span class="detail-val">${pkgNames[b.pkg]}</span>
+        <span class="detail-label">Antall gjester</span><span class="detail-val">${b.guests||'–'}</span>
+        ${b.pkg>=3?`<span class="detail-label">Lunsj kl.</span><span class="detail-val">${b.lunch_time}</span><span class="detail-label">Søtt etter lunsj kl.</span><span class="detail-val">${b.sweet_time}</span>`:''}
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="detail-section">
+      <div class="detail-section-title">Kontakt</div>
+      <div class="detail-grid">
+        <span class="detail-label">Firma</span><span class="detail-val">${b.company||'–'}</span>
+        <span class="detail-label">Navn</span><span class="detail-val">${b.contact||'–'}</span>
+        <span class="detail-label">Telefon</span><span class="detail-val">${b.phone||'–'}</span>
+        <span class="detail-label">E-post</span><span class="detail-val">${b.email||'–'}</span>
+        <span class="detail-label">Allergier</span><span class="detail-val">${b.allergies||'–'}</span>
+        <span class="detail-label">Notater</span><span class="detail-val">${b.notes||'–'}</span>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="detail-section">
+      <div class="detail-section-title">Ansvarsfordeling</div>
+      <div class="detail-grid">
+        <span class="detail-label">Møter gjester</span><span class="detail-val">${b.resp?.r1||'–'}</span>
+        <span class="detail-label">Serverer start</span><span class="detail-val">${b.resp?.r2||'–'}</span>
+        <span class="detail-label">Sjekker inn</span><span class="detail-val">${b.resp?.r3||'–'}</span>
+        <span class="detail-label">Serverer lunsj</span><span class="detail-val">${b.resp?.r4||'–'}</span>
+        <span class="detail-label">Søtt etter lunsj</span><span class="detail-val">${b.resp?.r5||'–'}</span>
+        <span class="detail-label">Rydder</span><span class="detail-val">${b.resp?.r6||'–'}</span>
+      </div>
+    </div>
+    <div class="action-row" style="margin-top:1rem">
+      <button class="btn-del" onclick="deleteMBooking(${b.id},'${b.date}');closeModal()">Slett</button>
+      <button class="btn-secondary" onclick="closeModal();editMBooking(${b.id})">Rediger</button>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function showRDetail(id){
+  const b = rBookings.find(x=>x.id===id); if(!b) return;
+  document.getElementById('modal-title').textContent = b.name + (b.vip?' ★':' ');
+  document.getElementById('modal-body').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">Bestilling</div>
+      <div class="detail-grid">
+        <span class="detail-label">Dato</span><span class="detail-val">${b.date}</span>
+        <span class="detail-label">Ankomst</span><span class="detail-val">${b.arrive}</span>
+        <span class="detail-label">Settetid</span><span class="detail-val">${b.seat}</span>
+        <span class="detail-label">Bord</span><span class="detail-val">${b.table_nr||'–'}</span>
+        <span class="detail-label">Antall gjester</span><span class="detail-val">${b.guests||'–'}</span>
+        <span class="detail-label">VIP</span><span class="detail-val">${b.vip?'Ja':'Nei'}</span>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="detail-section">
+      <div class="detail-section-title">Gjest</div>
+      <div class="detail-grid">
+        <span class="detail-label">Telefon</span><span class="detail-val">${b.phone||'–'}</span>
+        <span class="detail-label">E-post</span><span class="detail-val">${b.email||'–'}</span>
+        <span class="detail-label">Bedrift</span><span class="detail-val">${b.company||'–'}</span>
+        <span class="detail-label">Allergier</span><span class="detail-val">${b.allergies||'–'}</span>
+        <span class="detail-label">Notater</span><span class="detail-val">${b.notes||'–'}</span>
+      </div>
+    </div>
+    <div class="action-row" style="margin-top:1rem">
+      <button class="btn-del" onclick="deleteRBooking(${b.id},'${b.date}');closeModal()">Slett</button>
+      <button class="btn-secondary" onclick="closeModal();editRBooking(${b.id})">Rediger</button>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+
+
+let overviewDateStr = null;
+
+function setOverviewDate(type){
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  if(type==='today'){
+    overviewDateStr = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+    document.getElementById('overview-date').value = overviewDateStr;
+  } else if(type==='tomorrow'){
+    const tom = new Date(now); tom.setDate(tom.getDate()+1);
+    overviewDateStr = tom.getFullYear()+'-'+pad(tom.getMonth()+1)+'-'+pad(tom.getDate());
+    document.getElementById('overview-date').value = overviewDateStr;
+  } else {
+    overviewDateStr = document.getElementById('overview-date').value;
+  }
+  renderToday();
+}
+
+function renderToday(){
+  const pkgN = ['','Pakke 1 – Kaffe','Pakke 2 – Kaffe og enkel servering','Pakke 3 – Brødmat','Pakke 4 – Lunsj fra Magnolia'];
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  const todayStr = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+  if(!overviewDateStr) overviewDateStr = todayStr;
+  document.getElementById('overview-date').value = overviewDateStr;
+  const viewDate = new Date(overviewDateStr+'T12:00:00');
+  const norDaysFull = ['søndag','mandag','tirsdag','onsdag','torsdag','fredag','lørdag'];
+  const norMonths = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+  const isToday = overviewDateStr===todayStr;
+  const _tt=new Date(now); _tt.setDate(_tt.getDate()+1);
+  const tomorrowStr2 = _tt.getFullYear()+'-'+pad(_tt.getMonth()+1)+'-'+pad(_tt.getDate());
+  const isTomorrow = overviewDateStr===tomorrowStr2;
+  const afterSeventeen = now.getHours()>=17;
+  let greeting = '';
+  if(isToday && afterSeventeen) greeting = 'God kveld! Her er status for i dag — og møterommene i morgen:';
+  else if(isToday) greeting = 'Hei, dette skjer i dag!';
+  else if(isTomorrow) greeting = 'Dette skjer i morgen!';
+  else greeting = 'Dette skjer '+viewDate.getDate()+'. '+norMonths[viewDate.getMonth()]+':';
+  document.getElementById('today-greeting').textContent = greeting;
+  document.getElementById('today-date-label').textContent = 
+    norDaysFull[viewDate.getDay()]+' '+viewDate.getDate()+'. '+norMonths[viewDate.getMonth()]+' '+viewDate.getFullYear();
+
+  // Meeting — show tomorrow after 17:00
+  const _mNow = new Date();
+  const _mPad = n=>String(n).padStart(2,'0');
+  let meetingDateStr = overviewDateStr;
+  if(_mNow.getHours()>=17 && overviewDateStr===todayStr){
+    const _tom=new Date(_mNow); _tom.setDate(_tom.getDate()+1);
+    meetingDateStr=_tom.getFullYear()+'-'+_mPad(_tom.getMonth()+1)+'-'+_mPad(_tom.getDate());
+  }
+  const mToday = mBookings.filter(b=>b.date===meetingDateStr).sort((a,b)=>a.arrive>b.arrive?1:-1);
+  const mList = document.getElementById('today-meeting-list');
+  if(!mToday.length){
+    const mEmptyTitle = (meetingDateStr!==overviewDateStr) ? 'Møterom i morgen' : 'Møterom';
+    mList.innerHTML='<div class="card-title" style="margin-bottom:0">'+mEmptyTitle+'</div><div class="empty-state" style="padding:1rem 0">Ingen møteromsbestillinger denne dagen</div>';
+  } else {
+    const mSectionTitle = (meetingDateStr!==overviewDateStr) ? 'Møterom i morgen' : 'Møterom';
+    mList.innerHTML = '<div class="card-title">'+mSectionTitle+'</div><div class="booking-list">'+mToday.map(b=>`
+      <div class="booking-item" style="cursor:pointer" onclick="showMDetail(${b.id})">
+        <div class="booking-item-main">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:14px;font-weight:500;color:var(--text)">${b.company||b.contact||'–'}</span>
+            <span style="font-size:13px;color:var(--text-muted)">Pk${b.pkg}</span>
+            <span style="font-size:13px;color:var(--text-muted)">kl. ${b.arrive}</span>
+          </div>
+        </div>
+        <span style="font-size:12px;color:var(--accent);white-space:nowrap">Detaljer →</span>
+      </div>
+    `).join('')+'</div>';
+  }
+
+  // Restaurant
+  const rToday = rBookings.filter(b=>b.date===overviewDateStr).sort((a,b)=>a.arrive>b.arrive?1:-1);
+  const rList = document.getElementById('today-restaurant-list');
+  const rSummary = document.getElementById('today-restaurant-summary');
+  const totalGuests = rToday.reduce((s,b)=>s+(parseInt(b.guests)||0),0);
+  if(!rToday.length){
+    rSummary.innerHTML='<div class="card-title" style="margin-bottom:0">Restaurant</div>';
+    rList.innerHTML='<div class="empty-state" style="padding:1rem 0">Ingen restaurantbestillinger denne dagen</div>';
+  } else {
+    rSummary.innerHTML='<div class="card-title">Restaurant</div><div style="font-size:13px;color:var(--text-muted);margin-bottom:1rem">Totalt '+totalGuests+' gjester · '+rToday.length+' bestilling'+(rToday.length>1?'er':'')+'</div>';
+    rList.innerHTML = '<div class="booking-list">'+rToday.map(b=>`
+      <div class="booking-item" style="cursor:pointer" onclick="showRDetail(${b.id})">
+        <div class="booking-item-main">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:14px;font-weight:500;color:var(--text)">${b.name}${b.vip?' <span class=\"badge badge-vip\">VIP</span>':''}</span>
+            <span style="font-size:13px;color:var(--text-muted)">kl. ${b.arrive}</span>
+            <span style="font-size:13px;color:var(--text-muted)">${b.seat||''}</span>
+            <span style="font-size:13px;color:var(--text-muted)">${b.guests||'?'} gjester</span>
+            <span style="font-size:13px;color:var(--text-muted)">Bord ${b.table_nr||'–'}</span>
+          </div>
+        </div>
+        <span style="font-size:12px;color:var(--accent);white-space:nowrap">Detaljer →</span>
+      </div>
+    `).join('')+'</div>';
+  }
+
+  // Events
+  const eToday = eBookings.filter(b=>b.date===overviewDateStr).sort((a,b)=>a.start_time>b.start_time?1:-1);
+  const eList = document.getElementById('today-events-list');
+  if(!eToday.length){
+    eList.innerHTML='<div class="card-title" style="margin-bottom:0">Andre eventer</div><div class="empty-state" style="padding:1rem 0">Ingen eventer denne dagen</div>';
+  } else {
+    eList.innerHTML='<div class="card-title">Andre eventer</div><div class="booking-list">'+eToday.map(b=>`
+      <div class="booking-item" style="cursor:pointer" onclick="showEDetail(${b.id})">
+        <div class="booking-item-main">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:14px;font-weight:500;color:var(--text)">${b.name}</span>
+            <span style="font-size:13px;color:var(--text-muted)">kl. ${b.start_time} – ${b.end_time}</span>
+            <span style="font-size:13px;color:var(--text-muted)">${b.guests||'?'} gjester</span>
+            ${b.location?'<span style="font-size:13px;color:var(--text-muted)">'+b.location+'</span>':''}
+          </div>
+        </div>
+        <span style="font-size:12px;color:var(--accent);white-space:nowrap">Detaljer →</span>
+      </div>
+    `).join('')+'</div>';
+  }
+}
+
+
+// ---- TABLE DEFINITIONS ----
+const TABLE_DEFS = [
+  // Single non-combinable
+  { id:'2', label:'Bord 2 (2–4 pers)', boards:[2], minP:1, maxP:4 },
+  // 4-tops combinable
+  { id:'3', label:'Bord 3 (2–4 pers)', boards:[3], minP:1, maxP:4 },
+  { id:'4', label:'Bord 4 (2–4 pers)', boards:[4], minP:1, maxP:4 },
+  { id:'5', label:'Bord 5 (2–4 pers)', boards:[5], minP:1, maxP:4 },
+  { id:'3+4', label:'Bord 3+4 (4–8 pers)', boards:[3,4], minP:4, maxP:8 },
+  { id:'4+5', label:'Bord 4+5 (4–8 pers)', boards:[4,5], minP:4, maxP:8 },
+  { id:'3+4+5', label:'Bord 3+4+5 (6–12 pers)', boards:[3,4,5], minP:6, maxP:12 },
+  // 2-tops row A
+  { id:'6', label:'Bord 6 (1–2 pers)', boards:[6], minP:1, maxP:2 },
+  { id:'7', label:'Bord 7 (1–2 pers)', boards:[7], minP:1, maxP:2 },
+  { id:'8', label:'Bord 8 (1–2 pers)', boards:[8], minP:1, maxP:2 },
+  { id:'6+7', label:'Bord 6+7 (2–4 pers)', boards:[6,7], minP:2, maxP:4 },
+  { id:'7+8', label:'Bord 7+8 (2–4 pers)', boards:[7,8], minP:2, maxP:4 },
+  { id:'6+7+8', label:'Bord 6+7+8 (2–6 pers)', boards:[6,7,8], minP:2, maxP:6 },
+  // 2-tops row B
+  { id:'9', label:'Bord 9 (1–2 pers)', boards:[9], minP:1, maxP:2 },
+  { id:'10', label:'Bord 10 (1–2 pers)', boards:[10], minP:1, maxP:2 },
+  { id:'11', label:'Bord 11 (1–2 pers)', boards:[11], minP:1, maxP:2 },
+  { id:'9+10', label:'Bord 9+10 (2–4 pers)', boards:[9,10], minP:2, maxP:4 },
+  { id:'10+11', label:'Bord 10+11 (2–4 pers)', boards:[10,11], minP:2, maxP:4 },
+  { id:'9+10+11', label:'Bord 9+10+11 (2–6 pers)', boards:[9,10,11], minP:2, maxP:6 },
+];
+
+const DURATION_MINUTES = { '1t':60, '1t30':90, '2t':120, '2t30':150, '3t':180 };
+
+function timeToMinutes(t){
+  if(!t) return 0;
+  const [h,m] = t.split(':').map(Number);
+  return h*60+m;
+}
+
+function getBookedBoards(date, arriveTime, durationKey, excludeId=null){
+  const dur = DURATION_MINUTES[durationKey]||120;
+  const newStart = timeToMinutes(arriveTime);
+  const newEnd = newStart + dur;
+  const booked = new Set();
+  rBookings.filter(b => b.date===date && b.id!==excludeId).forEach(b=>{
+    const bStart = timeToMinutes(b.arrive);
+    const bDur = DURATION_MINUTES[b.seat]||120;
+    const bEnd = bStart + bDur;
+    // Check overlap
+    if(newStart < bEnd && newEnd > bStart){
+      // Find which boards this booking uses
+      const def = TABLE_DEFS.find(t=>t.id===b.table_nr);
+      if(def) def.boards.forEach(board=>booked.add(board));
+    }
+  });
+  return booked;
+}
+
+function updateAvailableTables(){
+  const date = document.getElementById('r-date').value;
+  const arrive = document.getElementById('r-arrive').value;
+  const seat = document.getElementById('r-seat').value;
+  const sel = document.getElementById('r-table');
+  const hint = document.getElementById('r-table-hint');
+  const currentVal = sel.value;
+
+  if(!date || !arrive || !seat){
+    sel.innerHTML = '<option value="">-- Velg dato, tid og varighet først --</option>';
+    hint.textContent = '';
+    return;
+  }
+
+  const bookedBoards = getBookedBoards(date, arrive, seat);
+  const available = TABLE_DEFS.filter(t => !t.boards.some(b=>bookedBoards.has(b)));
+  const unavailable = TABLE_DEFS.filter(t => t.boards.some(b=>bookedBoards.has(b)));
+
+  sel.innerHTML = '<option value="">Velg bord...</option>';
+  
+  if(available.length){
+    const grp = document.createElement('optgroup');
+    grp.label = '✓ Ledige bord';
+    available.forEach(t=>{
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.label;
+      if(t.id===currentVal) opt.selected=true;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  }
+
+  if(unavailable.length){
+    const grp2 = document.createElement('optgroup');
+    grp2.label = '✗ Opptatt i denne perioden';
+    unavailable.forEach(t=>{
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.label;
+      opt.disabled = true;
+      grp2.appendChild(opt);
+    });
+    sel.appendChild(grp2);
+  }
+
+  hint.textContent = available.length
+    ? available.length+' bord tilgjengelig for valgt tid'
+    : 'Ingen ledige bord i denne perioden';
+  hint.style.color = available.length ? 'var(--accent)' : 'var(--danger)';
+}
+
+function editMBooking(id){
+  const b = mBookings.find(x=>x.id===id); if(!b) return;
+  // Switch to meeting section
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('meeting').classList.add('active');
+  document.querySelectorAll('.top-nav .nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.top-nav .nav-btn')[1].classList.add('active');
+  // Switch to form panel
+  const subBtns = document.querySelectorAll('#meeting .sub-btn');
+  subBtns.forEach(b=>b.classList.remove('active'));
+  subBtns[0].classList.add('active');
+  document.querySelectorAll('#meeting .panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('m-form').classList.add('active');
+  // Fill form
+  document.getElementById('m-room').value = b.room||'';
+  document.getElementById('m-date').value = b.date||'';
+  // For select dropdowns, set value then verify
+  const mArriveEl = document.getElementById('m-arrive');
+  mArriveEl.value = b.arrive||'08:00';
+  const mEndEl = document.getElementById('m-end');
+  mEndEl.value = b.finish||'16:00';
+  document.getElementById('m-guests').value = b.guests||'';
+  document.getElementById('m-company').value = b.company||'';
+  document.getElementById('m-contact').value = b.contact||'';
+  document.getElementById('m-phone').value = b.phone||'';
+  document.getElementById('m-email').value = b.email||'';
+  document.getElementById('m-allergies').value = b.allergies||'';
+  document.getElementById('m-notes').value = b.notes||'';
+  document.getElementById('m-lunch').value = b.lunch_time||'12:00';
+  document.getElementById('m-sweet').value = b.sweet_time||'13:00';
+  document.getElementById('m-diffarrive').checked = b.diff_arrive||false;
+  document.getElementById('diff-arrival-box').classList.toggle('show', b.diff_arrive);
+  document.getElementById('m-host-arrive').value = b.host_arrive||'08:00';
+  document.getElementById('m-guest-arrive').value = b.guest_arrive||'09:00';
+  if(b.resp){
+    document.getElementById('r1').value = b.resp.r1||'';
+    document.getElementById('r2').value = b.resp.r2||'';
+    document.getElementById('r3').value = b.resp.r3||'';
+    document.getElementById('r4').value = b.resp.r4||'';
+    document.getElementById('r5').value = b.resp.r5||'';
+    document.getElementById('r6').value = b.resp.r6||'';
+  }
+  if(b.pkg){
+    document.getElementById('m-nopkg').checked = false;
+  document.getElementById('m-mail-input').value='';
+  document.getElementById('m-parse-status').textContent='';
+    document.getElementById('pkg-grid').style.opacity = '1';
+    document.getElementById('pkg-grid').style.pointerEvents = 'auto';
+    selectPkg(b.pkg);
+  } else {
+    document.getElementById('m-nopkg').checked = true;
+    toggleNoPkg();
+  }
+  // Change save button to update
+  const btn = document.getElementById('m-save-btn');
+  btn.textContent = 'Oppdater bestilling';
+  btn.onclick = async()=>{
+    await sb.from('meeting_bookings').delete().eq('id', id);
+    mBookings = mBookings.filter(x=>x.id!==id);
+    btn.textContent = 'Lagre og legg inn ny';
+    btn.onclick = saveMeetingBooking;
+    saveMeetingBooking();
+  };
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function editRBooking(id){
+  const b = rBookings.find(x=>x.id===id); if(!b) return;
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('restaurant').classList.add('active');
+  document.querySelectorAll('.top-nav .nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.top-nav .nav-btn')[2].classList.add('active');
+  const subBtns = document.querySelectorAll('#restaurant .sub-btn');
+  subBtns.forEach(b=>b.classList.remove('active'));
+  subBtns[0].classList.add('active');
+  document.querySelectorAll('#restaurant .panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('r-form').classList.add('active');
+  document.getElementById('r-date').value = b.date||'';
+  document.getElementById('r-arrive').value = b.arrive||'';
+  document.getElementById('r-seat').value = b.seat||'';
+  document.getElementById('r-guests').value = b.guests||'';
+  document.getElementById('r-table').value = b.table_nr||'';
+  document.getElementById('r-vip').checked = b.vip||false;
+  document.getElementById('r-name').value = b.name||'';
+  document.getElementById('r-phone').value = b.phone||'';
+  document.getElementById('r-email').value = b.email||'';
+  document.getElementById('r-company').value = b.company||'';
+  document.getElementById('r-allergies').value = b.allergies||'';
+  document.getElementById('r-notes').value = b.notes||'';
+  updateAvailableTables();
+  setTimeout(()=>{ document.getElementById('r-table').value = b.table_nr||''; }, 100);
+  const btn = document.getElementById('r-save-btn');
+  btn.textContent = 'Oppdater bestilling';
+  btn.onclick = async()=>{
+    await sb.from('restaurant_bookings').delete().eq('id', id);
+    rBookings = rBookings.filter(x=>x.id!==id);
+    btn.textContent = 'Lagre og legg inn ny';
+    btn.onclick = saveRestBooking;
+    saveRestBooking();
+  };
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function closeModal(e){
+  if(!e || e.target===document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('show');
+}
+
+
+// ---- EVENT BOOKINGS ----
+let eBookings = [];
+let eCurDate = new Date();
+
+async function loadEBookings(){
+  const { data, error } = await sb.from('event_bookings').select('*');
+  if(error){ showToast('Feil ved lasting av eventer', true); return; }
+  eBookings = data || [];
+}
+
+async function saveEventBooking(){
+  const name = document.getElementById('e-name').value;
+  const date = document.getElementById('e-date').value;
+  if(!name||!date){ showToast('Fyll inn navn og dato.', true); return; }
+  const btn = document.getElementById('e-save-btn');
+  btn.disabled=true; btn.textContent='Lagrer...';
+  const record = {
+    name, date,
+    start_time: document.getElementById('e-start').value,
+    end_time: document.getElementById('e-end').value,
+    guests: parseInt(document.getElementById('e-guests').value)||null,
+    location: document.getElementById('e-location').value,
+    contact: document.getElementById('e-contact').value,
+    phone: document.getElementById('e-phone').value,
+    email: document.getElementById('e-email').value,
+    food_drinks: document.getElementById('e-food').value,
+    notes: document.getElementById('e-notes').value,
+    resp: {
+      r1: document.getElementById('e-r1').value,
+      r2: document.getElementById('e-r2').value,
+      r3: document.getElementById('e-r3').value,
+      r4: document.getElementById('e-r4').value
+    }
+  };
+  const { error } = await sb.from('event_bookings').insert([record]);
+  btn.disabled=false; btn.textContent='Lagre event';
+  if(error){ showToast('Feil ved lagring: '+error.message, true); return; }
+  showToast('Event lagret!');
+  clearEventForm();
+  await loadEBookings();
+  renderECal();
+  const eSubBtns = document.querySelectorAll('#events .sub-btn');
+  eSubBtns.forEach(b=>b.classList.remove('active'));
+  eSubBtns[0].classList.add('active');
+  document.querySelectorAll('#events .panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('e-form').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function deleteEBooking(id, date){
+  if(!confirm('Slette dette eventet?')) return;
+  const { error } = await sb.from('event_bookings').delete().eq('id', id);
+  if(error){ showToast('Feil ved sletting', true); return; }
+  showToast('Event slettet');
+  await loadEBookings();
+  renderECal();
+  showEDay(date);
+}
+
+function clearEventForm(){
+  ['e-name','e-date','e-start','e-end','e-guests','e-location','e-contact','e-phone','e-email','e-food','e-notes','e-r1','e-r2','e-r3','e-r4'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+}
+
+function renderECal(){
+  buildCal('e-cal-grid','e-month-title',eCurDate,eBookings,showEDay,
+    b=>b.map(x=>x.name).join(' / '));
+}
+
+async function loadAndRenderECal(){
+  await loadEBookings(); renderECal();
+}
+
+function showEDay(dateStr){
+  overviewDateStr = dateStr;
+  document.getElementById('overview-date').value = dateStr;
+  const navBtns = document.querySelectorAll('.top-nav .nav-btn');
+  navBtns.forEach(b=>b.classList.remove('active'));
+  navBtns[0].classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('today-section').classList.add('active');
+  renderToday();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showEDetail(id){
+  const b = eBookings.find(x=>x.id===id); if(!b) return;
+  document.getElementById('modal-title').textContent = b.name;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">Event</div>
+      <div class="detail-grid">
+        <span class="detail-label">Dato</span><span class="detail-val">${b.date}</span>
+        <span class="detail-label">Tid</span><span class="detail-val">${b.start_time} – ${b.end_time}</span>
+        <span class="detail-label">Antall gjester</span><span class="detail-val">${b.guests||'–'}</span>
+        <span class="detail-label">Lokasjon</span><span class="detail-val">${b.location||'–'}</span>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="detail-section">
+      <div class="detail-section-title">Kontakt</div>
+      <div class="detail-grid">
+        <span class="detail-label">Navn</span><span class="detail-val">${b.contact||'–'}</span>
+        <span class="detail-label">Telefon</span><span class="detail-val">${b.phone||'–'}</span>
+        <span class="detail-label">E-post</span><span class="detail-val">${b.email||'–'}</span>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="detail-section">
+      <div class="detail-section-title">Mat og drikke</div>
+      <div style="font-size:13px;color:var(--text)">${b.food_drinks||'–'}</div>
+    </div>
+    <hr class="divider">
+    <div class="detail-section">
+      <div class="detail-section-title">Notater</div>
+      <div style="font-size:13px;color:var(--text)">${b.notes||'–'}</div>
+    </div>
+    <hr class="divider">
+    <div class="detail-section">
+      <div class="detail-section-title">Ansvarsfordeling</div>
+      <div class="detail-grid">
+        <span class="detail-label">Møter gjester</span><span class="detail-val">${b.resp?.r1||'–'}</span>
+        <span class="detail-label">Mat og drikke</span><span class="detail-val">${b.resp?.r2||'–'}</span>
+        <span class="detail-label">Ansvarlig</span><span class="detail-val">${b.resp?.r3||'–'}</span>
+        <span class="detail-label">Rydder</span><span class="detail-val">${b.resp?.r4||'–'}</span>
+      </div>
+    </div>
+    <div class="action-row" style="margin-top:1rem">
+      <button class="btn-del" onclick="deleteEBooking(${b.id},'${b.date}');closeModal()">Slett event</button>
+      <button class="btn-secondary" onclick="closeModal();editEBooking(${b.id})">Rediger</button>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function editEBooking(id){
+  const b = eBookings.find(x=>x.id===id); if(!b) return;
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('events').classList.add('active');
+  document.querySelectorAll('.top-nav .nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.top-nav .nav-btn')[3].classList.add('active');
+  const subBtns = document.querySelectorAll('#events .sub-btn');
+  subBtns.forEach(b=>b.classList.remove('active'));
+  subBtns[0].classList.add('active');
+  document.querySelectorAll('#events .panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('e-form').classList.add('active');
+  document.getElementById('e-name').value = b.name||'';
+  document.getElementById('e-date').value = b.date||'';
+  document.getElementById('e-start').value = b.start_time||'18:00';
+  document.getElementById('e-end').value = b.end_time||'21:00';
+  document.getElementById('e-guests').value = b.guests||'';
+  document.getElementById('e-location').value = b.location||'';
+  document.getElementById('e-contact').value = b.contact||'';
+  document.getElementById('e-phone').value = b.phone||'';
+  document.getElementById('e-email').value = b.email||'';
+  document.getElementById('e-food').value = b.food_drinks||'';
+  document.getElementById('e-notes').value = b.notes||'';
+  if(b.resp){
+    document.getElementById('e-r1').value = b.resp.r1||'';
+    document.getElementById('e-r2').value = b.resp.r2||'';
+    document.getElementById('e-r3').value = b.resp.r3||'';
+    document.getElementById('e-r4').value = b.resp.r4||'';
+  }
+  const btn = document.getElementById('e-save-btn');
+  btn.textContent = 'Oppdater event';
+  btn.onclick = async()=>{
+    await sb.from('event_bookings').delete().eq('id', id);
+    eBookings = eBookings.filter(x=>x.id!==id);
+    btn.textContent = 'Lagre og legg inn ny';
+    btn.onclick = saveEventBooking;
+    saveEventBooking();
+  };
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+
+
+// ============================================================
+// MONTHLY MEETING ROOM BREAKDOWN
+// ============================================================
+function populateMonthSelector(){
+  const sel = document.getElementById('rev-month-detail');
+  if(!sel) return;
+  const months = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+  const now = new Date();
+  sel.innerHTML='';
+  // Show last 12 months
+  for(let i=11;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const val = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const opt = document.createElement('option');
+    opt.value=val;
+    opt.textContent=months[d.getMonth()]+' '+d.getFullYear();
+    if(i===0) opt.selected=true;
+    sel.appendChild(opt);
+  }
+}
+
+function renderMonthDetail(){
+  const month = document.getElementById('rev-month-detail')?.value;
+  if(!month) return;
+  const costs = [0,
+    parseFloat(document.getElementById('cost1')?.value)||0,
+    parseFloat(document.getElementById('cost2')?.value)||0,
+    parseFloat(document.getElementById('cost3')?.value)||0,
+    parseFloat(document.getElementById('cost4')?.value)||0
+  ];
+  const PKG_PRICES = [0,115,195,390,510];
+  const MVA = 1.25;
+  const bkgs = mBookings.filter(b=>b.date&&b.date.startsWith(month)&&b.pkg>0);
+  const total = bkgs.length;
+  if(!total){
+    document.getElementById('month-detail-results').innerHTML='<div class="empty-state">Ingen møteromsbestillinger denne måneden</div>';
+    return;
+  }
+  const pkgStats = [1,2,3,4].map(p=>{
+    const pb = bkgs.filter(b=>b.pkg===p);
+    const guests = pb.reduce((s,b)=>s+(parseInt(b.guests)||0),0);
+    const rev = guests*PKG_PRICES[p];
+    const cost = guests*costs[p];
+    return {p,count:pb.length,guests,rev,cost,db:rev-cost,dg:rev>0?((rev-cost)/rev*100):0};
+  });
+  const totRev = pkgStats.reduce((s,x)=>s+x.rev,0);
+  const totCost = pkgStats.reduce((s,x)=>s+x.cost,0);
+  const totDB = totRev-totCost;
+  const totDG = totRev>0?(totDB/totRev*100):0;
+  const totGuests = pkgStats.reduce((s,x)=>s+x.guests,0);
+
+  let html = `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1rem">
+    <div style="background:var(--accent-light);border-radius:var(--radius);padding:10px 12px;text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">Bookinger</div>
+      <div style="font-size:22px;font-weight:500;color:var(--accent)">${total}</div>
+    </div>
+    <div style="background:var(--accent-light);border-radius:var(--radius);padding:10px 12px;text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">Gjester</div>
+      <div style="font-size:22px;font-weight:500;color:var(--accent)">${totGuests}</div>
+    </div>
+    <div style="background:var(--accent-light);border-radius:var(--radius);padding:10px 12px;text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em">DG</div>
+      <div style="font-size:22px;font-weight:500;color:var(--accent)">${totDG.toFixed(1)}%</div>
+    </div>
+  </div>`;
+
+  html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:500">Per pakke</div>';
+  html += pkgStats.filter(x=>x.count>0).map(x=>`
+    <div style="display:grid;grid-template-columns:80px 40px 50px 1fr 1fr 1fr;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="font-weight:500;color:var(--text)">Pakke ${x.p}</span>
+      <span style="color:var(--text-muted)">${x.count} bkg</span>
+      <span style="color:var(--text-muted)">${Math.round(total>0?x.count/total*100:0)}%</span>
+      <span style="color:var(--text)">${Math.round(x.rev).toLocaleString('no')} kr</span>
+      <span style="color:var(--danger)">-${Math.round(x.cost).toLocaleString('no')} kr</span>
+      <span style="color:var(--accent)">DB: ${Math.round(x.db).toLocaleString('no')} kr</span>
+    </div>
+  `).join('');
+
+  html += `<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:500;margin-top:4px">
+    <span>Total</span>
+    <span>${Math.round(totRev).toLocaleString('no')} kr / ${Math.round(totRev*MVA).toLocaleString('no')} kr inkl. &nbsp;·&nbsp; DB: ${Math.round(totDB).toLocaleString('no')} kr</span>
+  </div>`;
+
+  document.getElementById('month-detail-results').innerHTML=html;
+  renderFutureEstimates();
+}
+
+function renderFutureEstimates(){
+  const costs = [0,
+    parseFloat(document.getElementById('cost1')?.value)||0,
+    parseFloat(document.getElementById('cost2')?.value)||0,
+    parseFloat(document.getElementById('cost3')?.value)||0,
+    parseFloat(document.getElementById('cost4')?.value)||0
+  ];
+  const PKG_PRICES=[0,115,195,390,510];
+  const MVA=1.25;
+  const norMonths=['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+  const now=new Date();
+  const inputsEl=document.getElementById('future-estimates-inputs');
+  const resultsEl=document.getElementById('future-estimates-results');
+  if(!inputsEl) return;
+
+  // Build 6 future months inputs
+  let inputHtml='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem">';
+  for(let i=1;i<=6;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()+i,1);
+    const key='est-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    inputHtml+=`<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">${norMonths[d.getMonth()]} ${d.getFullYear()}</div>
+      <input type="number" id="${key}" placeholder="Ant. bookinger" min="0"
+        style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:'DM Sans',sans-serif"
+        onchange="calcFutureEstimates()"></div>`;
+  }
+  inputHtml+='</div>';
+  inputsEl.innerHTML=inputHtml;
+}
+
+function calcFutureEstimates(){
+  const PKG_PRICES=[0,115,195,390,510];
+  const MVA=1.25;
+  const costs=[0,
+    parseFloat(document.getElementById('cost1')?.value)||0,
+    parseFloat(document.getElementById('cost2')?.value)||0,
+    parseFloat(document.getElementById('cost3')?.value)||0,
+    parseFloat(document.getElementById('cost4')?.value)||0
+  ];
+  const norMonths=['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+  const now=new Date();
+
+  // Calculate avg pkg distribution and avg guests from historical data
+  const histBkgs=mBookings.filter(b=>b.pkg>0);
+  const pkgDist=[0,0,0,0,0];
+  let avgGuests=8;
+  if(histBkgs.length){
+    histBkgs.forEach(b=>{ if(b.pkg>=1&&b.pkg<=4) pkgDist[b.pkg]++; });
+    avgGuests=Math.round(histBkgs.reduce((s,b)=>s+(parseInt(b.guests)||0),0)/histBkgs.length)||8;
+  } else {
+    pkgDist[1]=1;pkgDist[2]=1;pkgDist[3]=1;pkgDist[4]=1;
+  }
+  const totDist=pkgDist.reduce((s,v)=>s+v,0)||4;
+
+  let html='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Basert på historisk pakkefordeling og snitt ${avgGuests} gjester per booking</div>';
+  html+='<div style="display:flex;flex-direction:column;gap:6px">';
+
+  for(let i=1;i<=6;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()+i,1);
+    const key='est-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const input=document.getElementById(key);
+    const count=parseFloat(input?.value)||0;
+    if(!count) continue;
+    let rev=0,cost=0;
+    for(let p=1;p<=4;p++){
+      const share=pkgDist[p]/totDist;
+      const bkgs=count*share;
+      const guests=bkgs*avgGuests;
+      rev+=PKG_PRICES[p]*guests;
+      cost+=costs[p]*guests;
+    }
+    const db=rev-cost;
+    const dg=rev>0?(db/rev*100):0;
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--bg);border-radius:var(--radius);font-size:12px">
+      <span style="font-weight:500;color:var(--text)">${norMonths[d.getMonth()]} ${d.getFullYear()} (${count} bkg)</span>
+      <span style="color:var(--text-muted)">${Math.round(rev).toLocaleString('no')} kr / ${Math.round(rev*MVA).toLocaleString('no')} inkl. &nbsp;·&nbsp; DG: ${dg.toFixed(1)}%</span>
+    </div>`;
+  }
+  html+='</div>';
+  document.getElementById('future-estimates-results').innerHTML=html;
+}
+
+// ============================================================
+// TRIPLE CLICK LOGO — REVENUE
+// ============================================================
+let logoClickCount = 0;
+let logoClickTimer = null;
+function handleLogoClick(){
+  logoClickCount++;
+  clearTimeout(logoClickTimer);
+  logoClickTimer = setTimeout(()=>{ logoClickCount=0; }, 600);
+  if(logoClickCount>=3){
+    logoClickCount=0;
+    openRevenueModal();
+  }
+}
+
+function openRevenueModal(){
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  document.getElementById('rev-date').value = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+  document.getElementById('rev-month').value = now.getFullYear()+'-'+pad(now.getMonth()+1);
+  document.getElementById('revenue-modal').style.display='flex';
+  renderRevenue();
+  populateMonthSelector();
+  renderMonthDetail();
+  renderFutureEstimates();
+}
+
+function closeRevenueModal(e){
+  if(!e||e.target===document.getElementById('revenue-modal'))
+    document.getElementById('revenue-modal').style.display='none';
+}
+
+const PKG_PRICES = [0,115,195,390,510];
+const MVA = 1.25;
+
+function renderRevenue(){
+  const date = document.getElementById('rev-date').value;
+  const month = document.getElementById('rev-month').value;
+  const costs = [0,
+    parseFloat(document.getElementById('cost1').value)||0,
+    parseFloat(document.getElementById('cost2').value)||0,
+    parseFloat(document.getElementById('cost3').value)||0,
+    parseFloat(document.getElementById('cost4').value)||0
+  ];
+  const rAvg = parseFloat(document.getElementById('r-avg').value)||0;
+
+  function calcMeeting(bookings){
+    let rev=0,cost=0;
+    bookings.forEach(b=>{
+      const g=parseInt(b.guests)||0;
+      const p=parseInt(b.pkg)||0;
+      if(p>0){ rev+=PKG_PRICES[p]*g; cost+=costs[p]*g; }
+    });
+    return {rev,cost,db:rev-cost,dg:rev>0?((rev-cost)/rev*100):0};
+  }
+
+  function calcRest(bookings){
+    let rev=0;
+    bookings.forEach(b=>{ rev+=rAvg*(parseInt(b.guests)||0); });
+    return {rev};
+  }
+
+  function fmtRow(label,eksVal,inklVal){
+    return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px">
+      <span style="color:var(--text-muted)">${label}</span>
+      <span style="color:var(--text)">${Math.round(eksVal).toLocaleString('no')} kr &nbsp;/&nbsp; ${Math.round(inklVal).toLocaleString('no')} kr inkl.</span>
+    </div>`;
+  }
+
+  let html = '';
+
+  // DAY
+  if(date){
+    const mDay = mBookings.filter(b=>b.date===date);
+    const rDay = rBookings.filter(b=>b.date===date);
+    const md = calcMeeting(mDay);
+    const rd = calcRest(rDay);
+    const total = md.rev+rd.rev;
+    html += `<div class="card" style="margin-bottom:1rem">
+      <div class="card-title">Dag — ${date}</div>
+      ${fmtRow('Møterom inntekt', md.rev, md.rev*MVA)}
+      ${fmtRow('Møterom kostpris', md.cost, md.cost*MVA)}
+      ${fmtRow('Møterom DB', md.db, md.db*MVA)}
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span style="color:var(--text-muted)">Møterom DG</span>
+        <span style="color:var(--text)">${md.dg.toFixed(1)}%</span>
+      </div>
+      ${fmtRow('Restaurant estimert', rd.rev, rd.rev*MVA)}
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px;font-weight:500;margin-top:4px">
+        <span>Total estimert</span>
+        <span>${Math.round(total).toLocaleString('no')} kr / ${Math.round(total*MVA).toLocaleString('no')} kr inkl.</span>
+      </div>
+    </div>`;
+  }
+
+  // MONTH
+  if(month){
+    const mMonth = mBookings.filter(b=>b.date&&b.date.startsWith(month));
+    const rMonth = rBookings.filter(b=>b.date&&b.date.startsWith(month));
+    const mm = calcMeeting(mMonth);
+    const rm = calcRest(rMonth);
+    const total = mm.rev+rm.rev;
+    html += `<div class="card">
+      <div class="card-title">Måned — ${month}</div>
+      ${fmtRow('Møterom inntekt', mm.rev, mm.rev*MVA)}
+      ${fmtRow('Møterom kostpris', mm.cost, mm.cost*MVA)}
+      ${fmtRow('Møterom DB', mm.db, mm.db*MVA)}
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span style="color:var(--text-muted)">Møterom DG</span>
+        <span style="color:var(--text)">${mm.dg.toFixed(1)}%</span>
+      </div>
+      ${fmtRow('Restaurant estimert', rm.rev, rm.rev*MVA)}
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px;font-weight:500;margin-top:4px">
+        <span>Total estimert</span>
+        <span>${Math.round(total).toLocaleString('no')} kr / ${Math.round(total*MVA).toLocaleString('no')} kr inkl.</span>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('revenue-results').innerHTML = html||'<div class="empty-state">Velg dato eller måned</div>';
+}
+
+// ============================================================
+// OPPSLAGSTAVLE
+// ============================================================
+let oBookings = [];
+
+async function loadOppslagstavle(){
+  const { data, error } = await sb.from('oppslagstavle').select('*').order('date',{ascending:false});
+  if(error){ showToast('Feil ved lasting', true); return; }
+  oBookings = data||[];
+}
+
+async function saveOppslagstavle(){
+  const date = document.getElementById('o-date').value;
+  if(!date){ showToast('Velg dato', true); return; }
+  const record = {
+    date,
+    mangler: document.getElementById('o-mangler').value,
+    logg: document.getElementById('o-logg').value,
+    author: document.getElementById('o-author').value
+  };
+  const { error } = await sb.from('oppslagstavle').insert([record]);
+  if(error){ showToast('Feil: '+error.message, true); return; }
+  showToast('Lagret!');
+  document.getElementById('o-mangler').value='';
+  document.getElementById('o-logg').value='';
+  await loadOppslagstavle();
+  renderOHistory();
+}
+
+function renderOHistory(){
+  const el = document.getElementById('o-history');
+  if(!oBookings.length){ el.innerHTML=''; return; }
+  el.innerHTML = '<div class="card-title" style="margin-bottom:1rem">Tidligere innlegg</div>'+
+    oBookings.slice(0,20).map(b=>`
+    <div class="card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:500;color:var(--text)">${b.date}</span>
+        <span style="font-size:12px;color:var(--text-muted)">${b.author||''}</span>
+      </div>
+      ${b.mangler?`<div style="font-size:13px;margin-bottom:4px"><span style="color:var(--danger);font-weight:500">Mangler:</span> ${b.mangler}</div>`:''}
+      ${b.logg?`<div style="font-size:13px"><span style="color:var(--text-muted);font-weight:500">Logg:</span> ${b.logg}</div>`:''}
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// CHECKOUT
+// ============================================================
+let checkoutBookings = [];
+
+async function loadCheckout(){
+  const { data } = await sb.from('checkout').select('*');
+  checkoutBookings = data||[];
+}
+
+function renderCheckout(){
+  const date = document.getElementById('co-date').value;
+  if(!date) return;
+  const todayMeetings = mBookings.filter(b=>b.date===date);
+  const el = document.getElementById('checkout-rooms');
+
+  const ROOM_CHECKS = [
+    'Kaffekopper + skåler',
+    'Vannglass',
+    'Små tallerkner',
+    'Servietter',
+    'Tekopper + skåler (et utvalg)',
+    'Vannkarafler klare på rommet',
+    'Bord rent og fritt for flekker',
+    'Alt gammelt servise ryddet og vasket',
+    'Bestikk ryddet',
+    'Ingen glemte eiendeler'
+  ];
+
+  if(!todayMeetings.length){
+    el.innerHTML='<div class="empty-state">Ingen møteromsbestillinger denne dagen</div>';
+    return;
+  }
+
+  el.innerHTML = todayMeetings.map((b,i)=>{
+    const guests = b.guests||0;
+    return `<div style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
+      <div style="font-size:14px;font-weight:500;margin-bottom:10px">${b.room.split(' (')[0]} &nbsp;·&nbsp; ${guests} gjester</div>
+      ${ROOM_CHECKS.map((c,j)=>`
+        <label class="checkbox-row" style="margin-bottom:6px">
+          <input type="checkbox" class="co-check" id="co-r${i}-${j}">
+          <span style="font-size:13px">${c}${j<4?' ('+guests+' stk)':''}</span>
+        </label><br>
+      `).join('')}
+      <div class="form-group" style="margin-top:10px">
+        <label>Avvik / kommentar</label>
+        <textarea id="co-avvik-${i}" placeholder="F.eks. mangler 4 kaffekopper..." style="min-height:60px"></textarea>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function saveCheckout(){
+  const date = document.getElementById('co-date').value;
+  const signed = document.getElementById('co-signed').value;
+  if(!date){ showToast('Velg dato', true); return; }
+  const todayMeetings = mBookings.filter(b=>b.date===date);
+  const checks = {};
+  todayMeetings.forEach((b,i)=>{
+    const boxes = document.querySelectorAll(`[id^="co-r${i}-"]`);
+    checks[b.room] = {
+      checked: Array.from(boxes).map(cb=>cb.checked),
+      avvik: document.getElementById(`co-avvik-${i}`)?.value||''
+    };
+  });
+  checks['kjøkken'] = {
+    avvik: document.getElementById('co-kitchen-avvik').value
+  };
+  const { error } = await sb.from('checkout').insert([{date,checks,signed_by:signed}]);
+  if(error){ showToast('Feil: '+error.message, true); return; }
+  showToast('Checkout lagret!');
+}
+
+// ============================================================
+// GENERELL INFO
+// ============================================================
+async function loadGenerellInfo(){
+  try{
+    const { data } = await sb.from('revenue_settings').select('*').eq('key','generell_info');
+    if(data&&data.length){
+      document.getElementById('o-info-display').textContent = data[0].value;
+      document.getElementById('o-info-edit').value = data[0].value;
+    }
+  }catch(e){}
+}
+
+async function saveGenerellInfo(){
+  const val = document.getElementById('o-info-edit').value;
+  await sb.from('revenue_settings').upsert([{key:'generell_info',value:val}],{onConflict:'key'});
+  document.getElementById('o-info-display').textContent = val;
+  showToast('Info lagret!');
+}
+
+
+// ============================================================
+// MINI CALENDAR ON DASHBOARD
+// ============================================================
+let miniCalDate = new Date();
+
+function miniCalChangeMonth(dir){
+  miniCalDate = new Date(miniCalDate.getFullYear(), miniCalDate.getMonth()+dir, 1);
+  renderMiniCal();
+}
+
+function renderMiniCal(){
+  const grid = document.getElementById('mini-cal-grid');
+  const title = document.getElementById('mini-cal-title');
+  if(!grid||!title) return;
+  const norMonths = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+  const year = miniCalDate.getFullYear(), month = miniCalDate.getMonth();
+  title.textContent = norMonths[month]+' '+year;
+  const first = new Date(year,month,1);
+  const last = new Date(year,month+1,0);
+  const startDay = (first.getDay()+6)%7;
+  const today = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  grid.innerHTML='';
+
+  for(let i=0;i<startDay;i++){
+    const d=document.createElement('div');
+    d.style.cssText='text-align:center;padding:2px 0;min-height:26px;opacity:0.25';
+    d.innerHTML='<div style="font-size:10px;color:var(--text-muted)">'+(new Date(year,month,1-startDay+i).getDate())+'</div>';
+    grid.appendChild(d);
+  }
+
+  for(let day=1;day<=last.getDate();day++){
+    const ds=year+'-'+pad(month+1)+'-'+pad(day);
+    const allBkgs=[...mBookings,...rBookings,...eBookings].filter(b=>b.date===ds);
+    const isToday=today.getFullYear()===year&&today.getMonth()===month&&today.getDate()===day;
+    const isSelected=overviewDateStr===ds;
+    const d=document.createElement('div');
+    let bg=isSelected?'var(--accent)':isToday?'var(--accent-light)':'transparent';
+    let border=isToday&&!isSelected?'1px solid var(--accent)':'1px solid transparent';
+    let color=isSelected?'#fff':'var(--text-muted)';
+    d.style.cssText=`text-align:center;padding:2px 1px;min-height:26px;cursor:pointer;border-radius:4px;background:${bg};border:${border};transition:background 0.12s`;
+    d.innerHTML=`<div style="font-size:10px;color:${color};font-weight:${isToday||isSelected?'500':'400'}">${day}</div>`+(allBkgs.length?'<div style="width:4px;height:4px;border-radius:50%;background:var(--danger);margin:1px auto 0"></div>':'');
+    d.onclick=()=>{
+      overviewDateStr=ds;
+      document.getElementById('overview-date').value=ds;
+      renderMiniCal();
+      renderToday();
+    };
+    grid.appendChild(d);
+  }
+
+  const rem=(7-((startDay+last.getDate())%7))%7;
+  for(let i=1;i<=rem;i++){
+    const d=document.createElement('div');
+    d.style.cssText='text-align:center;padding:2px 0;min-height:26px;opacity:0.25';
+    d.innerHTML='<div style="font-size:10px;color:var(--text-muted)">'+i+'</div>';
+    grid.appendChild(d);
+  }
+}
+
+
+// ============================================================
+// NEW BOOKING FROM DASHBOARD
+// ============================================================
+function toggleNewBookingMenu(e){
+  e.stopPropagation();
+  const menu = document.getElementById('new-booking-menu');
+  menu.style.display = menu.style.display==='none' ? 'block' : 'none';
+}
+document.addEventListener('click', ()=>{
+  const menu = document.getElementById('new-booking-menu');
+  if(menu) menu.style.display='none';
+});
+
+function openNewBooking(type){
+  document.getElementById('new-booking-menu').style.display='none';
+  const navBtns = document.querySelectorAll('.top-nav .nav-btn');
+  const sectionMap = {'meeting':1,'restaurant':2,'events':3};
+  const sectionId = {'meeting':'meeting','restaurant':'restaurant','events':'events'};
+  const formId = {'meeting':'m-form','restaurant':'r-form','events':'e-form'};
+  const dateId = {'meeting':'m-date','restaurant':'r-date','events':'e-date'};
+
+  // Switch section
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(sectionId[type]).classList.add('active');
+  navBtns.forEach(b=>b.classList.remove('active'));
+  navBtns[sectionMap[type]].classList.add('active');
+
+  // Switch to form panel
+  const sec = document.getElementById(sectionId[type]);
+  sec.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(formId[type]).classList.add('active');
+  sec.querySelectorAll('.sub-btn').forEach(b=>b.classList.remove('active'));
+  sec.querySelectorAll('.sub-btn')[0].classList.add('active');
+
+  // Pre-fill date
+  document.getElementById(dateId[type]).value = overviewDateStr||'';
+  if(type==='restaurant') updateAvailableTables();
+
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ============================================================
+// MAIL PARSER — CLAUDE API
+// ============================================================
+function setSelectNearest(id, timeStr){
+  const el = document.getElementById(id);
+  if(!el) return;
+  // Normalize time string to HH:MM
+  let t = timeStr.replace('.', ':').trim();
+  if(t.length===4 && !t.includes(':')) t = t.slice(0,2)+':'+t.slice(2);
+  if(t.length===3 && t.includes(':')) t = '0'+t;
+  // Try exact match first
+  for(let opt of el.options){ if(opt.value===t){ el.value=t; return; } }
+  // Find nearest 15-min slot
+  const [h,m] = t.split(':').map(Number);
+  const mins = h*60+m;
+  const rounded = Math.round(mins/15)*15;
+  const rh = String(Math.floor(rounded/60)).padStart(2,'0');
+  const rm = String(rounded%60).padStart(2,'0');
+  const nearest = rh+':'+rm;
+  for(let opt of el.options){ if(opt.value===nearest){ el.value=nearest; return; } }
+}
+
+async function parseMailMeeting(){
+  const mailText = document.getElementById('m-mail-input').value.trim();
+  if(!mailText){ showToast('Lim inn mailtekst først', true); return; }
+  const btn = document.getElementById('m-parse-btn');
+  const status = document.getElementById('m-parse-status');
+  btn.disabled=true; btn.textContent='Tolker...';
+  status.textContent='';
+
+  // Gather existing values to avoid overwriting
+  const existing = {
+    company: document.getElementById('m-company').value,
+    contact: document.getElementById('m-contact').value,
+    phone: document.getElementById('m-phone').value,
+    email: document.getElementById('m-email').value,
+    guests: document.getElementById('m-guests').value,
+    allergies: document.getElementById('m-allergies').value,
+    notes: document.getElementById('m-notes').value,
+    date: document.getElementById('m-date').value,
+    arrive: document.getElementById('m-arrive').value,
+    end: document.getElementById('m-end').value,
+    pkg: selPkg
+  };
+
+  const prompt = `Du er en assistent som hjelper et restaurant/konferansesenter å tolke bookingmailer.
+Les følgende mailtekst og trekk ut relevant informasjon.
+Vær smart med datoer og tider — norske formater som "d 21.05", "21.05", "21. mai", "21/5" skal alle tolkes til YYYY-MM-DD format (bruk 2026 som år hvis ikke oppgitt). Tider som "kl 09.00", "kl. 9", "09:00", "0900" skal tolkes til HH:MM format.
+Svar KUN med et JSON-objekt med disse feltene (bruk null for felt du ikke finner):
+{
+  "company": "firmanavn",
+  "contact": "kontaktpersonens navn",
+  "phone": "telefonnummer",
+  "email": "epostadresse",
+  "guests": antall_gjester_som_tall,
+  "allergies": "allergier og matbehov",
+  "notes": "andre relevante notater",
+  "date": "dato i format YYYY-MM-DD",
+  "arrive": "ankomsttid i format HH:MM",
+  "end": "sluttid i format HH:MM",
+  "pkg": pakkenummer_1_til_4_eller_null,
+  "room": "eksakt romnavn eller null",
+  "lunch_time": "lunsjtid i format HH:MM eller null",
+  "sweet_time": "tid for søtt etter lunsj i format HH:MM eller null"
+}
+
+Pakker: 1=Kaffe (115kr), 2=Kaffe+servering (195kr), 3=Brødmat/lunsj (390kr), 4=Lunsj fra Magnolia (510kr)
+
+Gyldige romnavn (bruk eksakt disse):
+- "Wenche Selmer (maks 13)" 
+- "Lilla Hansen (maks 8)"
+- "Christian Norberg-Schulz (maks 70)"
+Hvis romnavnet i mailen ligner på ett av disse, bruk det eksakte navnet. F.eks. "Christian Nordberg Schultz" = "Christian Norberg-Schulz (maks 70)".
+
+Legg også "room" som et felt i JSON-objektet med eksakt romnavn eller null.
+
+Mailtekst:
+${mailText}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-5',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    if(!response.ok){ throw new Error('API feil: '+response.status+' '+JSON.stringify(await response.json())); }
+    const data = await response.json();
+    const text = data.content.map(i=>i.text||'').join('');
+    console.log('RAW RESPONSE:', text);
+    const clean = text.replace(/```json|```/g,'').trim();
+    console.log('CLEAN:', clean);
+    const parsed = JSON.parse(clean);
+    console.log('PARSED:', parsed);
+
+    // Only fill fields that are empty OR have new info
+    if(parsed.company && !existing.company) document.getElementById('m-company').value = parsed.company;
+    if(parsed.contact && !existing.contact) document.getElementById('m-contact').value = parsed.contact;
+    if(parsed.phone && !existing.phone) document.getElementById('m-phone').value = parsed.phone;
+    if(parsed.email && !existing.email) document.getElementById('m-email').value = parsed.email;
+    if(parsed.guests && !existing.guests) document.getElementById('m-guests').value = parsed.guests;
+    // date handled above
+    if(parsed.arrive) setSelectNearest('m-arrive', parsed.arrive);
+    if(parsed.end) setSelectNearest('m-end', parsed.end);
+    if(parsed.date) document.getElementById('m-date').value = parsed.date;
+    if(parsed.pkg && !existing.pkg) selectPkg(parsed.pkg);
+    if(parsed.room){ const roomEl=document.getElementById('m-room'); if(!roomEl.value) roomEl.value=parsed.room; }
+    if(parsed.lunch_time) setSelectNearest('m-lunch', parsed.lunch_time);
+    if(parsed.sweet_time) setSelectNearest('m-sweet', parsed.sweet_time);
+    // Allergies and notes — append if already has content
+    if(parsed.allergies){
+      const curA = document.getElementById('m-allergies').value;
+      document.getElementById('m-allergies').value = curA ? curA+' | '+parsed.allergies : parsed.allergies;
+    }
+    if(parsed.notes){
+      const curN = document.getElementById('m-notes').value;
+      document.getElementById('m-notes').value = curN ? curN+' | '+parsed.notes : parsed.notes;
+    }
+    document.getElementById('m-mail-input').value='';
+    status.textContent='✓ Feltene er oppdatert — sjekk og juster om nødvendig';
+    status.style.color='var(--accent)';
+    showToast('Mail tolket!');
+  } catch(err){
+    status.textContent='Feil: '+err.message;
+    status.style.color='var(--danger)';
+    showToast('Feil: '+err.message, true);
+    console.error('Parse error:', err);
+  }
+  btn.disabled=false; btn.textContent='Tolk mail';
+}
+
+
+// ============================================================
+// API KEY MANAGEMENT
+// ============================================================
+function getApiKey(){
+  let key = localStorage.getItem('magnolia_api_key');
+  if(!key){
+    key = prompt('Skriv inn Anthropic API-nøkkel for mail-tolking:');
+    if(key) localStorage.setItem('magnolia_api_key', key);
+  }
+  return key||'';
+}
+
+// Init — wake up Supabase then load
+(async()=>{
+  showToast('Kobler til database...');
+  try{
+    await Promise.all([
+      sb.from('meeting_bookings').select('id').limit(1),
+      sb.from('restaurant_bookings').select('id').limit(1),
+      sb.from('event_bookings').select('id').limit(1)
+    ]);
+  }catch(e){}
+  await Promise.all([loadMBookings(), loadRBookings(), loadEBookings()]);
+  renderToday();
+  renderMiniCal();
+  // Set default dates
+  const _now = new Date();
+  const _pad = n=>String(n).padStart(2,'0');
+  const _today = _now.getFullYear()+'-'+_pad(_now.getMonth()+1)+'-'+_pad(_now.getDate());
+  overviewDateStr = _today;
+  document.getElementById('overview-date').value = overviewDateStr;
+  document.getElementById('o-date').value = _today;
+  document.getElementById('co-date').value = _today;
+  await loadGenerellInfo();
+  showToast('Klar!');
+})();
+</script>
+</body>
+</html>
