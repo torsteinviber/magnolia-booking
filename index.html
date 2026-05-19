@@ -927,6 +927,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
           <button class="btn-secondary" id="m-parse-btn" onclick="parseMailMeeting()">Tolk mail</button>
         </div>
         <div id="m-parse-status" style="font-size:12px;color:var(--text-muted);margin-top:6px"></div>
+        <div style="margin-top:6px"><button onclick="resetApiKey()" style="background:none;border:none;font-size:11px;color:var(--text-hint);cursor:pointer;padding:0;text-decoration:underline">Oppdater API-nøkkel</button></div>
       </div>
 
       <div class="card">
@@ -2723,9 +2724,9 @@ async function parseMailMeeting(){
   };
 
   const prompt = `Du er en assistent som hjelper et restaurant/konferansesenter å tolke bookingmailer.
-Les følgende mailtekst og trekk ut relevant informasjon.
-Vær smart med datoer og tider — norske formater som "d 21.05", "21.05", "21. mai", "21/5" skal alle tolkes til YYYY-MM-DD format (bruk 2026 som år hvis ikke oppgitt). Tider som "kl 09.00", "kl. 9", "09:00", "0900" skal tolkes til HH:MM format.
-Svar KUN med et JSON-objekt med disse feltene (bruk null for felt du ikke finner):
+KRITISK VIKTIG: Du skal KUN hente informasjon som faktisk står i mailteksten nedenfor. Hvis et felt ikke er eksplisitt nevnt i mailen, skal verdien være null. Du skal ALDRI gjette, hallusinere eller finne opp informasjon som ikke finnes i teksten.
+Vær smart med datoer og tider — norske formater som "d 21.05", "21.05", "21. mai", "21/5" skal alle tolkes til YYYY-MM-DD format (bruk 2026 som år hvis ikke oppgitt). Tider som "kl 09.00", "kl. 9", "09:00", "0900", "1130" skal tolkes til HH:MM format.
+Svar KUN med et JSON-objekt med disse feltene (bruk null for felt du ikke finner i mailen):
 {
   "company": "firmanavn",
   "contact": "kontaktpersonens navn",
@@ -2822,6 +2823,11 @@ function getApiKey(){
     if(key) localStorage.setItem('magnolia_api_key', key);
   }
   return key||'';
+}
+
+function resetApiKey(){
+  const key = prompt('Skriv inn ny Anthropic API-nøkkel:');
+  if(key){ localStorage.setItem('magnolia_api_key', key); showToast('API-nøkkel oppdatert!'); }
 }
 
 // Init — wake up Supabase then load
