@@ -30,10 +30,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 h1,h2,h3{font-family:'DM Serif Display',serif;font-weight:400}
 
 /* Layout */
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:50}
-.header-logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);letter-spacing:0.02em}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:50;overflow:hidden}
+.header-logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);letter-spacing:0.02em;flex-shrink:0;margin-right:8px}
 .header-logo span{color:var(--accent)}
-.top-nav{display:flex;gap:4px}
+.top-nav{display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;flex-shrink:1;min-width:0}.top-nav::-webkit-scrollbar{display:none}
 .nav-btn{padding:7px 18px;border:1px solid transparent;border-radius:var(--radius);background:transparent;color:var(--text-muted);cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500;transition:all 0.15s}
 .nav-btn:hover{color:var(--text);background:var(--bg)}
 .nav-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -228,7 +228,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
           <div style="text-align:center;font-size:9px;color:var(--text-hint);font-weight:500;text-transform:uppercase">lø</div>
           <div style="text-align:center;font-size:9px;color:var(--text-hint);font-weight:500;text-transform:uppercase">sø</div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px" id="mini-cal-grid"></div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;width:100%" id="mini-cal-grid"></div>
       </div>
     </div>
     <div style="margin-bottom:1rem;position:relative">
@@ -2647,8 +2647,8 @@ function renderMiniCal(){
     let bg=isSelected?'var(--accent)':isToday?'var(--accent-light)':'transparent';
     let border=isToday&&!isSelected?'1px solid var(--accent)':'1px solid transparent';
     let color=isSelected?'#fff':'var(--text-muted)';
-    d.style.cssText=`text-align:center;padding:2px 1px;min-height:26px;cursor:pointer;border-radius:4px;background:${bg};border:${border};transition:background 0.12s`;
-    d.innerHTML=`<div style="font-size:10px;color:${color};font-weight:${isToday||isSelected?'500':'400'}">${day}</div>`+(allBkgs.length?'<div style="width:4px;height:4px;border-radius:50%;background:var(--danger);margin:1px auto 0"></div>':'');
+    d.style.cssText=`text-align:center;padding:2px 1px;min-height:26px;max-height:36px;overflow:hidden;cursor:pointer;border-radius:4px;background:${bg};border:${border};transition:background 0.12s`;
+    d.innerHTML=`<div style="font-size:10px;color:${color};font-weight:${isToday||isSelected?'500':'400'}">${day}</div>`+(allBkgs.length?'<div style="width:4px;height:4px;min-width:4px;min-height:4px;border-radius:50%;background:var(--danger);margin:1px auto 0;flex-shrink:0"></div>':'');
     d.onclick=()=>{
       overviewDateStr=ds;
       document.getElementById('overview-date').value=ds;
