@@ -239,14 +239,14 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
         <button onclick="openNewBooking('events')" style="width:100%;padding:12px 16px;text-align:left;background:none;border:none;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);cursor:pointer" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">Andre eventer</button>
       </div>
     </div>
-    <div class="card">
+    <div class="card" id="today-meeting-card" style="display:none">
       <div id="today-meeting-list"></div>
     </div>
-    <div class="card">
+    <div class="card" id="today-restaurant-card" style="display:none">
       <div id="today-restaurant-summary" style="font-size:13px;color:var(--text-muted);margin-bottom:1rem"></div>
       <div id="today-restaurant-list"></div>
     </div>
-    <div class="card">
+    <div class="card" id="today-events-card" style="display:none">
       <div id="today-events-list"></div>
     </div>
   </div>
@@ -596,7 +596,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
   </div>
 
   <!-- MEETING SECTION -->
-  <div id="meeting" class="section active">
+  <div id="meeting" class="section">
     <div class="sub-nav">
       <button class="sub-btn" onclick="switchSub('meeting','m-form',this)">Ny bestilling</button>
       <button class="sub-btn active" onclick="switchSub('meeting','m-cal',this)">Kalender</button>
@@ -1720,9 +1720,11 @@ function renderToday(){
   const mList = document.getElementById('today-meeting-list');
   if(!mToday.length){
     const mEmptyTitle = (meetingDateStr!==overviewDateStr) ? 'Møterom i morgen' : 'Møterom';
+    document.getElementById('today-meeting-card').style.display='block';
     mList.innerHTML='<div class="card-title" style="margin-bottom:0">'+mEmptyTitle+'</div><div class="empty-state" style="padding:1rem 0">Ingen møteromsbestillinger denne dagen</div>';
   } else {
     const mSectionTitle = (meetingDateStr!==overviewDateStr) ? 'Møterom i morgen' : 'Møterom';
+    document.getElementById('today-meeting-card').style.display='block';
     mList.innerHTML = '<div class="card-title">'+mSectionTitle+'</div><div class="booking-list">'+mToday.map(b=>`
       <div class="booking-item" style="cursor:pointer" onclick="showMDetail(${b.id})">
         <div class="booking-item-main">
@@ -1743,9 +1745,11 @@ function renderToday(){
   const rSummary = document.getElementById('today-restaurant-summary');
   const totalGuests = rToday.reduce((s,b)=>s+(parseInt(b.guests)||0),0);
   if(!rToday.length){
+    document.getElementById('today-restaurant-card').style.display='block';
     rSummary.innerHTML='<div class="card-title" style="margin-bottom:0">Restaurant</div>';
     rList.innerHTML='<div class="empty-state" style="padding:1rem 0">Ingen restaurantbestillinger denne dagen</div>';
   } else {
+    document.getElementById('today-restaurant-card').style.display='block';
     rSummary.innerHTML='<div class="card-title">Restaurant</div><div style="font-size:13px;color:var(--text-muted);margin-bottom:1rem">Totalt '+totalGuests+' gjester · '+rToday.length+' bestilling'+(rToday.length>1?'er':'')+'</div>';
     rList.innerHTML = '<div class="booking-list">'+rToday.map(b=>`
       <div class="booking-item" style="cursor:pointer" onclick="showRDetail(${b.id})">
@@ -1767,8 +1771,10 @@ function renderToday(){
   const eToday = eBookings.filter(b=>b.date===overviewDateStr).sort((a,b)=>a.start_time>b.start_time?1:-1);
   const eList = document.getElementById('today-events-list');
   if(!eToday.length){
+    document.getElementById('today-events-card').style.display='block';
     eList.innerHTML='<div class="card-title" style="margin-bottom:0">Andre eventer</div><div class="empty-state" style="padding:1rem 0">Ingen eventer denne dagen</div>';
   } else {
+    document.getElementById('today-events-card').style.display='block';
     eList.innerHTML='<div class="card-title">Andre eventer</div><div class="booking-list">'+eToday.map(b=>`
       <div class="booking-item" style="cursor:pointer" onclick="showEDetail(${b.id})">
         <div class="booking-item-main">
