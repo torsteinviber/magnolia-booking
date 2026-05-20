@@ -153,6 +153,37 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
 .loading{text-align:center;padding:2rem;color:var(--text-hint);font-size:13px}
 .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;margin-right:8px;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+@media (max-width: 768px) {
+  .header{padding:0 1rem;height:52px}
+  .header-logo{font-size:18px}
+  .top-nav{gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .nav-btn{padding:6px 10px;font-size:12px;white-space:nowrap}
+  .main{padding:1rem 0.75rem}
+  .card{padding:1rem}
+  .form-grid{grid-template-columns:1fr}
+  .form-grid-3{grid-template-columns:1fr}
+  .form-group.full{grid-column:1}
+  .pkg-grid{grid-template-columns:1fr}
+  .cal-day{min-height:40px;padding:4px 2px}
+  .cal-day-num{font-size:10px}
+  .cal-count{font-size:9px}
+  .booking-item{flex-direction:column;gap:8px}
+  .booking-actions{flex-direction:row;justify-content:flex-end}
+  .resp-row{grid-template-columns:1fr;gap:4px}
+  .resp-label{padding:4px 0 0}
+  .modal{padding:1.25rem;max-height:92vh}
+  .detail-grid{grid-template-columns:auto 1fr;gap:4px 12px}
+  .sub-nav{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+  .sub-btn{white-space:nowrap;font-size:12px;padding:5px 10px}
+  .day-detail-header{flex-direction:column;gap:4px}
+  h2{font-size:20px!important}
+  .cal-nav-btn{padding:4px 8px;font-size:14px}
+  .cal-month-title{font-size:16px}
+  .action-row{flex-direction:column}
+  .action-row .btn-primary,.action-row .btn-secondary{width:100%;text-align:center}
+  #mini-cal-grid div, .mini-cal-other{min-height:32px!important}
+}
 </style>
 </head>
 <body>
@@ -307,9 +338,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
       <div class="card">
         <div class="card-title">Møterom</div>
         <div style="font-size:13px;line-height:1.8;color:var(--text)">
-          <div style="margin-bottom:8px"><strong>Wenche Selmer</strong> &nbsp;·&nbsp; maks 13 pers</div>
+          <div style="margin-bottom:8px"><strong>Wenche Selmer</strong> &nbsp;·&nbsp; maks 12 pers</div>
           <div style="margin-bottom:8px"><strong>Lilla Hansen</strong> &nbsp;·&nbsp; maks 8 pers</div>
-          <div><strong>Christian Norberg-Schulz</strong> &nbsp;·&nbsp; maks 70 pers</div>
+          <div><strong>Christian Norberg-Schulz</strong> &nbsp;·&nbsp; maks 45 pers</div>
         </div>
       </div>
       <div class="card">
@@ -580,8 +611,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
             <select id="m-room">
               <option value="">Velg rom...</option>
               <option>Wenche Selmer (maks 15)</option>
-              <option>Lilla Hansen (maks 12)</option>
-              <option>Christian Norberg-Schulz (maks 70)</option>
+              <option>Lilla Hansen</option>
+              <option>Christian Norberg-Schulz</option>
             </select>
           </div>
           <div class="form-group">
@@ -1010,7 +1041,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
         </div>
         <div class="cal-grid" id="m-cal-grid"><div class="loading"><span class="spinner"></span>Laster...</div></div>
       </div>
-      <div id="m-day-detail" style="display:none;visibility:hidden">
+      <div id="m-day-detail" style="display:none">
         <div class="card">
           <div class="day-detail-header">
             <div class="day-detail-title" id="m-day-title"></div>
@@ -1123,7 +1154,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
         </div>
         <div class="cal-grid" id="r-cal-grid"><div class="loading"><span class="spinner"></span>Laster...</div></div>
       </div>
-      <div id="r-day-detail" style="display:none;visibility:hidden">
+      <div id="r-day-detail" style="display:none">
         <div class="card">
           <div class="day-detail-header">
             <div class="day-detail-title" id="r-day-title"></div>
@@ -2747,10 +2778,10 @@ Svar KUN med et JSON-objekt med disse feltene (bruk null for felt du ikke finner
 Pakker: 1=Kaffe (115kr), 2=Kaffe+servering (195kr), 3=Brødmat/lunsj (390kr), 4=Lunsj fra Magnolia (510kr)
 
 Gyldige romnavn (bruk eksakt disse):
-- "Wenche Selmer (maks 13)" 
-- "Lilla Hansen (maks 8)"
-- "Christian Norberg-Schulz (maks 70)"
-Hvis romnavnet i mailen ligner på ett av disse, bruk det eksakte navnet. F.eks. "Christian Nordberg Schultz" = "Christian Norberg-Schulz (maks 70)".
+- "Wenche Selmer" 
+- "Lilla Hansen"
+- "Christian Norberg-Schulz"
+Hvis romnavnet i mailen ligner på ett av disse, bruk det eksakte navnet. F.eks. "Christian Nordberg Schultz" = "Christian Norberg-Schulz".
 
 Legg også "room" som et felt i JSON-objektet med eksakt romnavn eller null.
 
@@ -2784,10 +2815,20 @@ ${mailText}`;
     if(parsed.guests && !existing.guests) document.getElementById('m-guests').value = parsed.guests;
     // date handled above
     if(parsed.arrive) setSelectNearest('m-arrive', parsed.arrive);
-    if(parsed.end) setSelectNearest('m-end', parsed.end);
+    setSelectNearest('m-end', parsed.end||'17:00');
     if(parsed.date) document.getElementById('m-date').value = parsed.date;
     if(parsed.pkg && !existing.pkg) selectPkg(parsed.pkg);
-    if(parsed.room){ const roomEl=document.getElementById('m-room'); if(!roomEl.value) roomEl.value=parsed.room; }
+    if(parsed.room){
+      const roomEl=document.getElementById('m-room');
+      if(!roomEl.value){
+        const roomStr = parsed.room.toLowerCase();
+        let matched = '';
+        if(roomStr.includes('wenche')||roomStr.includes('selmer')) matched='Wenche Selmer';
+        else if(roomStr.includes('lilla')||roomStr.includes('hansen')) matched='Lilla Hansen';
+        else if(roomStr.includes('christian')||roomStr.includes('norberg')||roomStr.includes('schulz')||roomStr.includes('schultz')) matched='Christian Norberg-Schulz';
+        if(matched) roomEl.value=matched;
+      }
+    }
     if(parsed.lunch_time) setSelectNearest('m-lunch', parsed.lunch_time);
     if(parsed.sweet_time) setSelectNearest('m-sweet', parsed.sweet_time);
     // Allergies and notes — append if already has content
