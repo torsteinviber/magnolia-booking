@@ -44,7 +44,7 @@ h1,h2,h3{font-family:'DM Serif Display',serif;font-weight:400}
 .sub-btn:hover{border-color:var(--border-strong);color:var(--text)}
 .sub-btn.active{background:var(--accent-light);color:var(--accent);border-color:var(--accent)}
 
-.section{display:none}.section.active{display:block}
+.section{display:none!important}.section.active{display:block!important}
 .panel{display:none}.panel.active{display:block}
 
 /* Cards */
@@ -182,7 +182,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
   .cal-month-title{font-size:16px}
   .action-row{flex-direction:column}
   .action-row .btn-primary,.action-row .btn-secondary{width:100%;text-align:center}
-  #mini-cal-grid div, .mini-cal-other{min-height:32px!important}
+  #mini-cal-grid div{box-sizing:border-box}
 }
 </style>
 </head>
@@ -240,7 +240,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
       </div>
     </div>
     <div class="card">
-      <div id="today-meeting-list"><div class="loading"><span class="spinner"></span>Laster...</div></div>
+      <div id="today-meeting-list"></div>
     </div>
     <div class="card">
       <div id="today-restaurant-summary" style="font-size:13px;color:var(--text-muted);margin-bottom:1rem"></div>
@@ -366,8 +366,8 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
   <!-- EVENTS SECTION -->
   <div id="events" class="section">
     <div class="sub-nav">
-      <button class="sub-btn" onclick="switchSub('events','e-form',this)">Nytt event</button>
-      <button class="sub-btn active" onclick="switchSub('events','e-cal',this)">Kalender</button>
+      <button class="sub-btn active" onclick="switchSub('events','e-form',this)">Nytt event</button>
+      <button class="sub-btn" onclick="switchSub('events','e-cal',this)">Kalender</button>
     </div>
 
     <div id="e-form" class="panel">
@@ -577,7 +577,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
       </div>
     </div>
 
-    <div id="e-cal" class="panel active">
+    <div id="e-cal" class="panel">
       <div class="card">
         <div class="cal-nav">
           <button class="cal-nav-btn" onclick="changeMonth('e',-1)">&#8592;</button>
@@ -1271,7 +1271,7 @@ function switchMain(id, btn){
     renderMiniCal();
     renderToday();
   }
-  if(id==='events') loadAndRenderECal();
+  if(id==='events'){ loadAndRenderECal(); }
   if(id==='oppslagstavle'){ loadOppslagstavle().then(()=>{ renderOHistory(); renderCheckout(); }); loadGenerellInfo(); }
 }
 
@@ -2647,7 +2647,7 @@ function renderMiniCal(){
     let bg=isSelected?'var(--accent)':isToday?'var(--accent-light)':'transparent';
     let border=isToday&&!isSelected?'1px solid var(--accent)':'1px solid transparent';
     let color=isSelected?'#fff':'var(--text-muted)';
-    d.style.cssText=`text-align:center;padding:2px 1px;min-height:26px;cursor:pointer;border-radius:4px;background:${bg};border:${border};transition:background 0.12s;display:flex;flex-direction:column;align-items:center;justify-content:flex-start`;
+    d.style.cssText=`text-align:center;padding:2px 1px;cursor:pointer;border-radius:4px;background:${bg};border:${border};transition:background 0.12s`;
     d.innerHTML=`<div style="font-size:10px;color:${color};font-weight:${isToday||isSelected?'500':'400'}">${day}</div>`+(allBkgs.length?'<div style="width:5px;height:5px;border-radius:50%;background:var(--danger);margin:2px auto 0"></div>':'');
     d.onclick=()=>{
       overviewDateStr=ds;
@@ -2884,6 +2884,7 @@ function resetApiKey(){
   await Promise.all([loadMBookings(), loadRBookings(), loadEBookings()]);
   renderToday();
   renderMiniCal();
+  // Don't render e-cal on init - only when events section is opened
   // Set default dates
   const _now = new Date();
   const _pad = n=>String(n).padStart(2,'0');
