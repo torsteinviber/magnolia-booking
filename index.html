@@ -590,7 +590,7 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
           <div class="cal-day-name">fre</div><div class="cal-day-name">lør</div>
           <div class="cal-day-name">søn</div>
         </div>
-        <div class="cal-grid" id="e-cal-grid"><div class="loading"><span class="spinner"></span>Laster...</div></div>
+        <div class="cal-grid" id="e-cal-grid"></div>
       </div>
     </div>
   </div>
@@ -1039,9 +1039,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
           <div class="cal-day-name">fre</div><div class="cal-day-name">lør</div>
           <div class="cal-day-name">søn</div>
         </div>
-        <div class="cal-grid" id="m-cal-grid"><div class="loading"><span class="spinner"></span>Laster...</div></div>
+        <div class="cal-grid" id="m-cal-grid"></div>
       </div>
-      <div id="m-day-detail" style="display:none">
+      <div id="m-day-detail" style="display:none!important">
         <div class="card">
           <div class="day-detail-header">
             <div class="day-detail-title" id="m-day-title"></div>
@@ -1152,9 +1152,9 @@ textarea{resize:vertical;min-height:72px;line-height:1.5}
           <div class="cal-day-name">fre</div><div class="cal-day-name">lør</div>
           <div class="cal-day-name">søn</div>
         </div>
-        <div class="cal-grid" id="r-cal-grid"><div class="loading"><span class="spinner"></span>Laster...</div></div>
+        <div class="cal-grid" id="r-cal-grid"></div>
       </div>
-      <div id="r-day-detail" style="display:none">
+      <div id="r-day-detail" style="display:none!important">
         <div class="card">
           <div class="day-detail-header">
             <div class="day-detail-title" id="r-day-title"></div>
@@ -2647,8 +2647,8 @@ function renderMiniCal(){
     let bg=isSelected?'var(--accent)':isToday?'var(--accent-light)':'transparent';
     let border=isToday&&!isSelected?'1px solid var(--accent)':'1px solid transparent';
     let color=isSelected?'#fff':'var(--text-muted)';
-    d.style.cssText=`text-align:center;padding:2px 1px;min-height:26px;max-height:36px;overflow:hidden;cursor:pointer;border-radius:4px;background:${bg};border:${border};transition:background 0.12s`;
-    d.innerHTML=`<div style="font-size:10px;color:${color};font-weight:${isToday||isSelected?'500':'400'}">${day}</div>`+(allBkgs.length?'<div style="width:4px;height:4px;min-width:4px;min-height:4px;border-radius:50%;background:var(--danger);margin:1px auto 0;flex-shrink:0"></div>':'');
+    d.style.cssText=`text-align:center;padding:2px 1px;min-height:26px;cursor:pointer;border-radius:4px;background:${bg};border:${border};transition:background 0.12s;display:flex;flex-direction:column;align-items:center;justify-content:flex-start`;
+    d.innerHTML=`<div style="font-size:10px;color:${color};font-weight:${isToday||isSelected?'500':'400'}">${day}</div>`+(allBkgs.length?'<div style="width:5px;height:5px;border-radius:50%;background:var(--danger);margin:2px auto 0"></div>':'');
     d.onclick=()=>{
       overviewDateStr=ds;
       document.getElementById('overview-date').value=ds;
